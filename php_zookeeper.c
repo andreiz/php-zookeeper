@@ -122,6 +122,20 @@ zend_object_value php_zk_new(zend_class_entry *ce TSRMLS_DC)
 
 /* {{{ internal API functions */
 
+static void php_zk_init_globals(zend_php_zookeeper_globals *php_zookeeper_globals_p TSRMLS_DC)
+{
+}
+
+static void php_zk_destroy_globals(zend_php_zookeeper_globals *php_zookeeper_globals_p TSRMLS_DC)
+{
+}
+
+PHP_ZOOKEEPER_API
+zend_class_entry *php_zk_get_ce(void)
+{
+	return zookeeper_ce;
+}
+
 /* }}} */
 
 /* {{{ methods arginfo */

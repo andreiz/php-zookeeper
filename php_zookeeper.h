@@ -40,9 +40,9 @@ PHP_MINFO_FUNCTION(zookeeper);
 #define PHP_ZOOKEEPER_VERSION "0.0.1"
 
 #ifdef ZTS
-#define MEMC_G(v) TSRMG(php_zookeeper_globals_id, zend_php_zookeeper_globals *, v)
+#define ZK_G(v) TSRMG(php_zookeeper_globals_id, zend_php_zookeeper_globals *, v)
 #else
-#define MEMC_G(v) (php_zookeeper_globals.v)
+#define ZK_G(v) (php_zookeeper_globals.v)
 #endif
 
 #endif /* PHP_ZOOKEEPER_H */
