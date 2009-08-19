@@ -6,7 +6,7 @@
 
 class Zookeeper {
 
-	public function __construct( $host, $watcher_cb = null, $recv_timeout = 0, $client_id = null, $passwd = null ) {}
+	public function __construct( $host, $watcher_cb = null, $recv_timeout = 10000) {}
 
 	public function create( $path, $value, $acl, $flags = null ) {}
 
@@ -24,9 +24,11 @@ class Zookeeper {
 
 	public function setAcl( $path, $version, $acls ) {}
 
-	public function setWatcher( $watcher_cb ) {}
-
 	public function getClientId( ) {}
+
+	public function setClientId( $client_id, $passwd ) {}
+
+	public function setWatcher( $watcher_cb ) {}
 
 	public function getState( ) {}
 

@@ -20,6 +20,7 @@
 #define PHP_ZOOKEEPER_H
 
 #include <zookeeper.h>
+#include <php.h>
 
 extern zend_module_entry zookeeper_module_entry;
 #define phpext_zookeeper_ptr &zookeeper_module_entry
@@ -31,6 +32,7 @@ extern zend_module_entry zookeeper_module_entry;
 #endif
 
 ZEND_BEGIN_MODULE_GLOBALS(php_zookeeper)
+	HashTable callbacks;
 ZEND_END_MODULE_GLOBALS(php_zookeeper)
 
 PHP_MINIT_FUNCTION(zookeeper);
