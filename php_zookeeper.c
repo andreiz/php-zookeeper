@@ -16,7 +16,7 @@
 
 /* $ Id: $ */
 
-/* TODO
+/* TODO RSHUTDOWN - clean out callbacks hash
  */
 
 #ifdef HAVE_CONFIG_H
@@ -89,9 +89,10 @@ ZEND_GET_MODULE(zookeeper)
   Forward declarations
 ****************************************/
 static php_cb_data_t* php_cb_data_new(zend_fcall_info *fci, zend_fcall_info_cache *fcc, zend_bool oneshot TSRMLS_DC);
-static void php_cb_data_destroy(void **entry);
+static void php_cb_data_destroy(php_cb_data_t **entry);
 static void php_zk_watcher_marshal(zhandle_t *zk, int type, int state, const char *path, void *context);
 static void php_parse_acl_list(zval *z_acl, struct ACL_vector *aclv);
+static void php_stat_to_array(const struct Stat *stat, zval *array);
 
 /****************************************
   Method implementations
@@ -186,7 +187,7 @@ static PHP_METHOD(Zookeeper, getChildren)
 	int i, status = ZOK;
 	ZK_METHOD_INIT_VARS;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!", &path, &path_len, &fci,
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f", &path, &path_len, &fci,
 							  &fcc) == FAILURE) {
 		return;
 	}
@@ -200,6 +201,7 @@ static PHP_METHOD(Zookeeper, getChildren)
 							   (fci.size != 0) ? php_zk_watcher_marshal : NULL,
 							   cb_data, &strings);
 	if (status != ZOK) {
+		php_cb_data_destroy(&cb_data);
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
 		return;
 	}
@@ -210,6 +212,146 @@ static PHP_METHOD(Zookeeper, getChildren)
 	}
 }
 /* }}} */
+
+/* {{{ Zookeeper::get( .. )
+   */
+static PHP_METHOD(Zookeeper, get)
+{
+	char *path;
+	int path_len;
+	zend_fcall_info fci = empty_fcall_info;
+	zend_fcall_info_cache fcc = empty_fcall_info_cache;
+	zval *stat_info = NULL;
+	php_cb_data_t *cb_data = NULL;
+	char buffer[512];
+	int buffer_len = 512;
+	struct Stat stat;
+	int status = ZOK;
+	ZK_METHOD_INIT_VARS;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!z", &path, &path_len, &fci,
+							  &fcc, &stat_info) == FAILURE) {
+		return;
+	}
+
+	ZK_METHOD_FETCH_OBJECT;
+
+	if (fci.size != 0) {
+		cb_data = php_cb_data_new(&fci, &fcc, 1);
+	}
+	status = zoo_wget(i_obj->zk, path, (fci.size != 0) ? php_zk_watcher_marshal : NULL,
+					  cb_data, buffer, &buffer_len, &stat);
+	if (status != ZOK) {
+		php_cb_data_destroy(&cb_data);
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		return;
+	}
+
+	if (stat_info) {
+		zval_dtor(stat_info);
+		php_stat_to_array(&stat, stat_info);
+	}
+	RETURN_STRINGL(buffer, buffer_len, 1);
+}
+/* }}} */
+
+/* {{{ Zookeeper::exists( .. )
+   */
+static PHP_METHOD(Zookeeper, exists)
+{
+	char *path;
+	int path_len;
+	zend_fcall_info fci = empty_fcall_info;
+	zend_fcall_info_cache fcc = empty_fcall_info_cache;
+	php_cb_data_t *cb_data = NULL;
+	struct Stat stat;
+	int status = ZOK;
+	ZK_METHOD_INIT_VARS;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f", &path, &path_len, &fci,
+							  &fcc) == FAILURE) {
+		return;
+	}
+
+	ZK_METHOD_FETCH_OBJECT;
+
+	if (fci.size != 0) {
+		cb_data = php_cb_data_new(&fci, &fcc, 1);
+	}
+	status = zoo_wexists(i_obj->zk, path, (fci.size != 0) ? php_zk_watcher_marshal : NULL,
+						 cb_data, &stat);
+	if (status != ZOK && status != ZNONODE) {
+		php_cb_data_destroy(&cb_data);
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		return;
+	}
+
+	if (status == ZOK) {
+		php_stat_to_array(&stat, return_value);
+		return;
+	} else {
+		RETURN_FALSE;
+	}
+}
+/* }}} */
+
+/* {{{ Zookeeper::set( .. )
+   */
+static PHP_METHOD(Zookeeper, set)
+{
+	char *path, *value;
+	int path_len, value_len;
+	long version;
+	zval *stat_info = NULL;
+	struct Stat stat, *stat_ptr = NULL;
+	int status = ZOK;
+	ZK_METHOD_INIT_VARS;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssl|z", &path, &path_len,
+							  &value, &value_len, &version, &stat_info) == FAILURE) {
+		return;
+	}
+
+	ZK_METHOD_FETCH_OBJECT;
+
+	if (stat_info) {
+		stat_ptr = &stat;
+	}
+	status = zoo_set2(i_obj->zk, path, value, value_len, version, stat_ptr);
+	if (status != ZOK) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		return;
+	}
+
+	if (stat_info) {
+		php_stat_to_array(stat_ptr, stat_info);
+	}
+
+	RETURN_TRUE;
+}
+/* }}} */
+
+/* {{{ Zookeeper::getClientId( .. )
+   */
+static PHP_METHOD(Zookeeper, getClientId)
+{
+	const clientid_t *cid;
+	int status = ZOK;
+	ZK_METHOD_INIT_VARS;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "") == FAILURE) {
+		return;
+	}
+
+	ZK_METHOD_FETCH_OBJECT;
+
+	cid = zoo_client_id(i_obj->zk);
+	array_init(return_value);
+	add_next_index_long(return_value, cid->client_id);
+	add_next_index_string(return_value, (char *)cid->passwd, 1);
+}
+/* }}} */
+
 
 
 /****************************************
@@ -262,7 +404,7 @@ static php_cb_data_t* php_cb_data_new(zend_fcall_info *fci, zend_fcall_info_cach
 	return cbd;
 }
 
-static void php_cb_data_destroy(void **entry)
+static void php_cb_data_destroy(php_cb_data_t **entry)
 {
 	php_cb_data_t *cbd = *(php_cb_data_t **)entry;
 	free(cbd);
@@ -353,6 +495,23 @@ static void php_parse_acl_list(zval *z_acl, struct ACL_vector *aclv)
 
 	aclv->count = i;
 }
+
+static void php_stat_to_array(const struct Stat *stat, zval *array)
+{
+	array_init(array);
+
+	add_assoc_double_ex(array, ZEND_STRS("czxid"), stat->czxid);
+	add_assoc_double_ex(array, ZEND_STRS("mzxid"), stat->mzxid);
+	add_assoc_double_ex(array, ZEND_STRS("ctime"), stat->ctime);
+	add_assoc_double_ex(array, ZEND_STRS("mtime"), stat->mtime);
+	add_assoc_long_ex(array, ZEND_STRS("version"), stat->version);
+	add_assoc_long_ex(array, ZEND_STRS("cversion"), stat->cversion);
+	add_assoc_long_ex(array, ZEND_STRS("aversion"), stat->aversion);
+	add_assoc_double_ex(array, ZEND_STRS("ephemeralOwner"), stat->ephemeralOwner);
+	add_assoc_long_ex(array, ZEND_STRS("dataLength"), stat->dataLength);
+	add_assoc_long_ex(array, ZEND_STRS("numChildren"), stat->numChildren);
+	add_assoc_double_ex(array, ZEND_STRS("pzxid"), stat->pzxid);
+}
 /* }}} */
 
 /* {{{ internal API functions */
@@ -385,7 +544,7 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_create, 0, 0, 1)
 	ZEND_ARG_INFO(0, path)
 	ZEND_ARG_INFO(0, value)
-	ZEND_ARG_INFO(0, acl)
+	ZEND_ARG_ARRAY_INFO(0, acl, 0)
 	ZEND_ARG_INFO(0, flags)
 ZEND_END_ARG_INFO()
 
@@ -393,6 +552,28 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_getChildren, 0, 0, 1)
 	ZEND_ARG_INFO(0, path)
 	ZEND_ARG_INFO(0, watcher_cb)
 ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_get, 0, 0, 1)
+	ZEND_ARG_INFO(0, path)
+	ZEND_ARG_INFO(0, watcher_cb)
+	ZEND_ARG_INFO(1, stat_info)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_exists, 0, 0, 1)
+	ZEND_ARG_INFO(0, path)
+	ZEND_ARG_INFO(0, watcher_cb)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_set, 0, 0, 1)
+	ZEND_ARG_INFO(0, path)
+	ZEND_ARG_INFO(0, value)
+	ZEND_ARG_INFO(0, version)
+	ZEND_ARG_INFO(1, stat_info)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(arginfo_getClientId, 0)
+ZEND_END_ARG_INFO()
+
 /* }}} */
 
 /* {{{ zookeeper_class_methods */
@@ -401,7 +582,12 @@ static zend_function_entry zookeeper_class_methods[] = {
     ZK_ME(__construct,        arginfo___construct)
 
 	ZK_ME(create,             arginfo_create)
+	ZK_ME(get,                arginfo_get)
 	ZK_ME(getChildren,        arginfo_getChildren)
+	ZK_ME(exists,             arginfo_exists)
+	ZK_ME(set,                arginfo_set)
+
+	ZK_ME(getClientId,        arginfo_getClientId)
 
     { NULL, NULL, NULL }
 };

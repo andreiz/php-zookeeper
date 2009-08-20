@@ -14,7 +14,7 @@ class Zookeeper {
 
 	public function set( $path, $data, $version = -1, &$stat = null ) {}
 	
-	public function get( $path, $watcher_cb = null) {}
+	public function get( $path, $watcher_cb = null, &$stat = null) {}
 
 	public function getChildren( $path, $watcher_cb = null ) {}
 
