@@ -6,7 +6,7 @@
 
 class Zookeeper {
 
-	public function __construct( $host, $watcher_cb = null, $recv_timeout = 10000) {}
+	public function __construct( $host, $watcher_cb = null, $recv_timeout = 10000, $clientId = null) {}
 
 	public function create( $path, $value, $acl, $flags = null ) {}
 
@@ -18,15 +18,13 @@ class Zookeeper {
 
 	public function getChildren( $path, $watcher_cb = null ) {}
 
-	public function exists( $path, $watcher_cb = null) {}
+	public function exists( $path, $watcher_cb = null ) {}
 
 	public function getAcl( $path ) {}
 
 	public function setAcl( $path, $version, $acls ) {}
 
 	public function getClientId( ) {}
-
-	public function setClientId( $client_id, $passwd ) {}
 
 	public function setWatcher( $watcher_cb ) {}
 
@@ -36,7 +34,7 @@ class Zookeeper {
 
 	public function setDeterministicConnOrder( $trueOrFalse ) {}
 
-	public function addAuth( $scheme, $cert, $completion_cb ) {}
+	public function addAuth( $scheme, $cert, $completion_cb = null ) {}
 
 	public function isRecoverable( ) {}
 
