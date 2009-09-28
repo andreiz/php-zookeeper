@@ -539,6 +539,33 @@ static PHP_METHOD(Zookeeper, addAuth)
 
 /* }}} */
 
+/* {{{ Zookeeper::setWatcher( .. )
+   */
+static PHP_METHOD(Zookeeper, setWatcher)
+{
+	zend_fcall_info fci = empty_fcall_info;
+	zend_fcall_info_cache fcc = empty_fcall_info_cache;
+	php_cb_data_t *cb_data = NULL;
+	ZK_METHOD_INIT_VARS;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f", &fci, &fcc) == FAILURE) {
+		return;
+	}
+
+	ZK_METHOD_FETCH_OBJECT;
+
+	if (i_obj->cb_data) {
+		zend_hash_index_del(&ZK_G(callbacks), i_obj->cb_data->h);
+	}
+	cb_data = php_cb_data_new(&fci, &fcc, 0);
+	zoo_set_watcher(i_obj->zk, php_zk_watcher_marshal);
+	i_obj->cb_data = cb_data;
+
+	RETURN_TRUE;
+}
+/* }}} */
+
+
 /****************************************
   Internal support code
 ****************************************/
@@ -547,7 +574,7 @@ static PHP_METHOD(Zookeeper, addAuth)
 static void php_zk_destroy(php_zk_t *i_obj TSRMLS_DC)
 {
 	if (i_obj->cb_data) {
-		efree(i_obj->cb_data);
+		zend_hash_index_del(&ZK_G(callbacks), i_obj->cb_data->h);
 	}
 	if (i_obj->zk) {
 		zookeeper_close(i_obj->zk);
@@ -593,6 +620,7 @@ static void php_cb_data_destroy(php_cb_data_t **entry)
 {
 	php_cb_data_t *cbd = *(php_cb_data_t **)entry;
 	free(cbd);
+	cbd = NULL;
 }
 
 
@@ -849,6 +877,10 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_addAuth, 0, 0, 2)
 	ZEND_ARG_INFO(0, cert)
 	ZEND_ARG_INFO(0, completion_cb)
 ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(arginfo_setWatcher, 0)
+	ZEND_ARG_INFO(0, watcher_cb)
+ZEND_END_ARG_INFO()
 /* }}} */
 
 /* {{{ zookeeper_class_methods */
@@ -874,6 +906,8 @@ static zend_function_entry zookeeper_class_methods[] = {
 	ZK_ME(setDeterministicConnOrder, arginfo_setDeterministicConnOrder)
 
 	ZK_ME(addAuth,            arginfo_addAuth)
+
+	ZK_ME(setWatcher,         arginfo_setWatcher)
 
     { NULL, NULL, NULL }
 };
