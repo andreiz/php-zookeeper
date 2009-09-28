@@ -607,7 +607,7 @@ zend_object_value php_zk_new(zend_class_entry *ce TSRMLS_DC)
 
 static php_cb_data_t* php_cb_data_new(zend_fcall_info *fci, zend_fcall_info_cache *fcc, zend_bool oneshot TSRMLS_DC)
 {
-	php_cb_data_t *cbd = malloc(sizeof(php_cb_data_t));
+	php_cb_data_t *cbd = emalloc(sizeof(php_cb_data_t));
 	cbd->fci = *fci;
 	cbd->fcc = *fcc;
 	cbd->oneshot = oneshot;
@@ -619,8 +619,7 @@ static php_cb_data_t* php_cb_data_new(zend_fcall_info *fci, zend_fcall_info_cach
 static void php_cb_data_destroy(php_cb_data_t **entry)
 {
 	php_cb_data_t *cbd = *(php_cb_data_t **)entry;
-	free(cbd);
-	cbd = NULL;
+	efree(cbd);
 }
 
 
@@ -930,7 +929,7 @@ zend_module_entry zookeeper_module_entry = {
 	PHP_MINIT(zookeeper),
 	PHP_MSHUTDOWN(zookeeper),
 	NULL,
-	NULL,
+	PHP_RSHUTDOWN(zookeeper),
 	PHP_MINFO(zookeeper),
 	PHP_ZOOKEEPER_VERSION,
 	STANDARD_MODULE_PROPERTIES
@@ -1031,6 +1030,15 @@ PHP_MSHUTDOWN_FUNCTION(zookeeper)
 #else
     php_zk_destroy_globals(&php_zookeeper_globals TSRMLS_CC);
 #endif
+
+	return SUCCESS;
+}
+/* }}} */
+
+/* {{{ PHP_RSHUTDOWN_FUNCTION */
+PHP_RSHUTDOWN_FUNCTION(zookeeper)
+{
+	zend_hash_clean(&ZK_G(callbacks));
 
 	return SUCCESS;
 }
