@@ -565,6 +565,41 @@ static PHP_METHOD(Zookeeper, setWatcher)
 }
 /* }}} */
 
+/* {{{ Zookeeper::setLogStream( .. )
+   */
+static PHP_METHOD(Zookeeper, setLogStream)
+{
+	zval *zstream;
+	php_stream *stream;
+	FILE *fp;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zstream) == FAILURE) {
+		return;
+	}
+
+	if (Z_TYPE_P(zstream) == IS_RESOURCE) {
+		php_stream_from_zval(stream, &zstream);
+	} else {
+		convert_to_string_ex(&zstream);
+		stream = php_stream_open_wrapper(Z_STRVAL_P(zstream), "w", ENFORCE_SAFE_MODE|REPORT_ERRORS, NULL);
+	}
+	if (stream == NULL) {
+		RETURN_FALSE;
+	}
+
+	if (FAILURE == php_stream_cast(stream, PHP_STREAM_AS_STDIO, (void *) &fp, REPORT_ERRORS)) {
+		RETURN_FALSE;
+	}
+
+	zoo_set_log_stream(fp);
+
+    if (Z_TYPE_P(zstream) == IS_RESOURCE) {
+		php_stream_free(stream, PHP_STREAM_FREE_CLOSE_CASTED);
+	}
+
+	RETURN_TRUE;
+}
+/* }}} */
 
 /****************************************
   Internal support code
@@ -880,6 +915,10 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO(arginfo_setWatcher, 0)
 	ZEND_ARG_INFO(0, watcher_cb)
 ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(arginfo_setLogStream, 0)
+	ZEND_ARG_INFO(0, stream)
+ZEND_END_ARG_INFO()
 /* }}} */
 
 /* {{{ zookeeper_class_methods */
@@ -907,6 +946,7 @@ static zend_function_entry zookeeper_class_methods[] = {
 	ZK_ME(addAuth,            arginfo_addAuth)
 
 	ZK_ME(setWatcher,         arginfo_setWatcher)
+	ZK_ME(setLogStream,       arginfo_setLogStream)
 
     { NULL, NULL, NULL }
 };
