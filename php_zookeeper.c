@@ -17,7 +17,6 @@
 /* $ Id: $ */
 
 /* TODO
- * RSHUTDOWN - clean out callbacks hash
  * parse client Id in constructor
  * add version to MINFO
  */
@@ -593,7 +592,7 @@ static PHP_METHOD(Zookeeper, setLogStream)
 
 	zoo_set_log_stream(fp);
 
-    if (Z_TYPE_P(zstream) == IS_RESOURCE) {
+	if (Z_TYPE_P(zstream) == IS_RESOURCE) {
 		php_stream_free(stream, PHP_STREAM_FREE_CLOSE_CASTED);
 	}
 
@@ -1087,14 +1086,15 @@ PHP_RSHUTDOWN_FUNCTION(zookeeper)
 /* {{{ PHP_MINFO_FUNCTION */
 PHP_MINFO_FUNCTION(zookeeper)
 {
+	char buf[32];
+
 	php_info_print_table_start();
 
 	php_info_print_table_header(2, "zookeeper support", "enabled");
-	php_info_print_table_row(2, "Version", PHP_ZOOKEEPER_VERSION);
-	/*
-	 * TODO
-	 * php_info_print_table_row(2, "libzookeeper version", zookeeper_lib_version());
-	 */
+	php_info_print_table_row(2, "version", PHP_ZOOKEEPER_VERSION);
+
+	snprintf(buf, sizeof(buf), "%ld.%ld.%ld", ZOO_MAJOR_VERSION, ZOO_MINOR_VERSION, ZOO_PATCH_VERSION);
+	php_info_print_table_row(2, "libzookeeper version", buf);
 
 	php_info_print_table_end();
 }
