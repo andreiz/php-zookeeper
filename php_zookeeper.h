@@ -40,7 +40,7 @@ PHP_MSHUTDOWN_FUNCTION(zookeeper);
 PHP_RSHUTDOWN_FUNCTION(zookeeper);
 PHP_MINFO_FUNCTION(zookeeper);
 
-#define PHP_ZOOKEEPER_VERSION "0.0.1"
+#define PHP_ZOOKEEPER_VERSION "0.1.0"
 
 #ifdef ZTS
 #define ZK_G(v) TSRMG(php_zookeeper_globals_id, zend_php_zookeeper_globals *, v)
