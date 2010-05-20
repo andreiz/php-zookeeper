@@ -45,3 +45,5 @@ Debug_TS
 memcached*.tgz
 run-tests.php
 cscope.out
+.project
+.cproject
