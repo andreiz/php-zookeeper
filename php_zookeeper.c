@@ -179,6 +179,34 @@ static PHP_METHOD(Zookeeper, create)
 }
 /* }}} */
 
+/* {{{ Zookeeper::delete( .. )
+   */
+static PHP_METHOD(Zookeeper, delete)
+{
+	char *path;
+	int path_len;
+	long version = -1;
+	int status = ZOK;
+
+	ZK_METHOD_INIT_VARS;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &path, &path_len,
+							  &version) == FAILURE) {
+		return;
+	}
+
+	ZK_METHOD_FETCH_OBJECT;
+
+	status = zoo_delete(i_obj->zk, path, version);
+	if (status != ZOK) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		return;
+	}
+
+	RETURN_TRUE;
+}
+/* }}} */
+
 /* {{{ Zookeeper::getChildren( .. )
    */
 static PHP_METHOD(Zookeeper, getChildren)
@@ -853,6 +881,11 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_create, 0, 0, 1)
 	ZEND_ARG_INFO(0, flags)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_delete, 0, 0, 1)
+	ZEND_ARG_INFO(0, path)
+	ZEND_ARG_INFO(0, version)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_getChildren, 0, 0, 1)
 	ZEND_ARG_INFO(0, path)
 	ZEND_ARG_INFO(0, watcher_cb)
@@ -926,6 +959,7 @@ static zend_function_entry zookeeper_class_methods[] = {
     ZK_ME(__construct,        arginfo___construct)
 
 	ZK_ME(create,             arginfo_create)
+	ZK_ME(delete,             arginfo_delete)
 	ZK_ME(get,                arginfo_get)
 	ZK_ME(getChildren,        arginfo_getChildren)
 	ZK_ME(exists,             arginfo_exists)
