@@ -51,7 +51,7 @@
 #define ZK_METHOD_FETCH_OBJECT                                                 \
     i_obj = (php_zk_t *) zend_object_store_get_object( object TSRMLS_CC );   \
 	if (!i_obj->zk) {	\
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Zookeeper constructor was not called");	\
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Zookeeper connect was not called");	\
 		return;	\
 	} \
 
@@ -103,24 +103,12 @@ static void php_aclv_to_array(const struct ACL_vector *aclv, zval *array);
   Method implementations
 ****************************************/
 
-/* {{{ Zookeeper::__construct( .. )
-   Creates a Zookeeper object */
-static PHP_METHOD(Zookeeper, __construct)
+static void php_zookeeper_connect_impl(INTERNAL_FUNCTION_PARAMETERS, char *host, zend_fcall_info *fci, zend_fcall_info_cache *fcc, long recv_timeout)
 {
 	zval *object = getThis();
 	php_zk_t *i_obj;
 	zhandle_t *zk = NULL;
-	char *host = NULL;
-	int host_len = 0;
-	zend_fcall_info fci = empty_fcall_info;
-	zend_fcall_info_cache fcc = empty_fcall_info_cache;
-	long recv_timeout = DEFAULT_RECV_TIMEOUT;
 	php_cb_data_t *cb_data = NULL;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!l", &host, &host_len, &fci, &fcc, &recv_timeout) == FAILURE) {
-		ZVAL_NULL(object);
-		return;
-	}
 
 	if (recv_timeout <= 0) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "recv_timeout parameter has to be greater than 0");
@@ -130,11 +118,11 @@ static PHP_METHOD(Zookeeper, __construct)
 
 	i_obj = (php_zk_t *) zend_object_store_get_object(object TSRMLS_CC);
 
-	if (fci.size != 0) {
-		cb_data = php_cb_data_new(&fci, &fcc, 0);
+	if (fci->size != 0) {
+		cb_data = php_cb_data_new(fci, fcc, 0);
 	}
-	zk = zookeeper_init(host, (fci.size != 0) ? php_zk_watcher_marshal : NULL,
-						recv_timeout, 0, cb_data, 0); 
+	zk = zookeeper_init(host, (fci->size != 0) ? php_zk_watcher_marshal : NULL,
+						recv_timeout, 0, cb_data, 0);
 
 	if (zk == NULL) {
 		php_error_docref(NULL TSRMLS_CC, E_ERROR, "could not init zookeeper instance");
@@ -144,7 +132,50 @@ static PHP_METHOD(Zookeeper, __construct)
 	i_obj->zk = zk;
 	i_obj->cb_data = cb_data;
 }
+
+/* {{{ Zookeeper::connect ( .. )
+   Connects to a zookeeper host */
+static PHP_METHOD(Zookeeper, connect)
+{
+	int host_len;
+	char *host;
+	zend_fcall_info fci = empty_fcall_info;
+	zend_fcall_info_cache fcc = empty_fcall_info_cache;
+	long recv_timeout = DEFAULT_RECV_TIMEOUT;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!l", &host, &host_len, &fci, &fcc, &recv_timeout) == FAILURE) {
+		return;
+	}
+
+	php_zookeeper_connect_impl(INTERNAL_FUNCTION_PARAM_PASSTHRU, host, &fci, &fcc, recv_timeout);
+}
 /* }}} */
+
+
+/* {{{ Zookeeper::__construct ( .. )
+   Creates a Zookeeper object and optionally connects */
+static PHP_METHOD(Zookeeper, __construct)
+{
+	zval *object = getThis();
+	int host_len = 0;
+	char *host = NULL;
+	zend_fcall_info fci = empty_fcall_info;
+	zend_fcall_info_cache fcc = empty_fcall_info_cache;
+	long recv_timeout = DEFAULT_RECV_TIMEOUT;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sf!l", &host, &host_len, &fci, &fcc, &recv_timeout) == FAILURE) {
+		ZVAL_NULL(object);
+		return;
+	}
+
+	if (host_len > 0)
+	{
+		php_zookeeper_connect_impl(INTERNAL_FUNCTION_PARAM_PASSTHRU, host, &fci, &fcc, recv_timeout);
+	}
+
+}
+/* }}} */
+
 
 /* {{{ Zookeeper::create( .. )
    */
@@ -511,7 +542,6 @@ static PHP_METHOD(Zookeeper, setDebugLevel)
 		return;
 	}
 
-	ZK_METHOD_FETCH_OBJECT;
 	zoo_set_debug_level((ZooLogLevel)level);
 	RETURN_TRUE;
 }
@@ -527,8 +557,7 @@ static PHP_METHOD(Zookeeper, setDeterministicConnOrder)
 		return;
 	}
 
-	ZK_METHOD_FETCH_OBJECT;
-	zoo_set_debug_level(value);
+	zoo_deterministic_conn_order(value);
 	RETURN_TRUE;
 }
 
@@ -874,6 +903,12 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, 0, 1)
 	ZEND_ARG_INFO(0, recv_timeout)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_connect , 0, 0, 1)
+	ZEND_ARG_INFO(0, host)
+	ZEND_ARG_INFO(0, watcher_cb)
+	ZEND_ARG_INFO(0, recv_timeout)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_create, 0, 0, 1)
 	ZEND_ARG_INFO(0, path)
 	ZEND_ARG_INFO(0, value)
@@ -955,8 +990,10 @@ ZEND_END_ARG_INFO()
 
 /* {{{ zookeeper_class_methods */
 #define ZK_ME(name, args) PHP_ME(Zookeeper, name, args, ZEND_ACC_PUBLIC)
+#define ZK_ME_STATIC(name, args) PHP_ME(Zookeeper, name, args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 static zend_function_entry zookeeper_class_methods[] = {
     ZK_ME(__construct,        arginfo___construct)
+    ZK_ME(connect,            arginfo_connect )
 
 	ZK_ME(create,             arginfo_create)
 	ZK_ME(delete,             arginfo_delete)
@@ -973,8 +1010,8 @@ static zend_function_entry zookeeper_class_methods[] = {
 	ZK_ME(getRecvTimeout,     arginfo_getRecvTimeout)
 	ZK_ME(isRecoverable,      arginfo_isRecoverable)
 
-	ZK_ME(setDebugLevel,      arginfo_setDebugLevel)
-	ZK_ME(setDeterministicConnOrder, arginfo_setDeterministicConnOrder)
+	ZK_ME_STATIC(setDebugLevel,      arginfo_setDebugLevel)
+	ZK_ME_STATIC(setDeterministicConnOrder, arginfo_setDeterministicConnOrder)
 
 	ZK_ME(addAuth,            arginfo_addAuth)
 
@@ -1081,6 +1118,9 @@ PHP_MINIT_FUNCTION(zookeeper)
 	INIT_CLASS_ENTRY(ce, "Zookeeper", zookeeper_class_methods);
 	zookeeper_ce = zend_register_internal_class(&ce TSRMLS_CC);
 	zookeeper_ce->create_object = php_zk_new;
+
+	/* set debug level to warning by default */
+	zoo_set_debug_level(ZOO_LOG_LEVEL_WARN);
 
 	php_zk_register_constants(INIT_FUNC_ARGS_PASSTHRU);
 
