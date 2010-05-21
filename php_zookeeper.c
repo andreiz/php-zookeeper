@@ -365,13 +365,13 @@ static PHP_METHOD(Zookeeper, set)
 {
 	char *path, *value;
 	int path_len, value_len;
-	long version;
+	long version = -1;
 	zval *stat_info = NULL;
 	struct Stat stat, *stat_ptr = NULL;
 	int status = ZOK;
 	ZK_METHOD_INIT_VARS;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssl|z", &path, &path_len,
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|lz", &path, &path_len,
 							  &value, &value_len, &version, &stat_info) == FAILURE) {
 		return;
 	}
