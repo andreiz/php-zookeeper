@@ -535,7 +535,7 @@ static PHP_METHOD(Zookeeper, isRecoverable)
    */
 static PHP_METHOD(Zookeeper, setDebugLevel)
 {
-	int level;
+	long level;
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &level) == FAILURE) {
