@@ -1,11 +1,11 @@
 /*
   +----------------------------------------------------------------------+
-  | Copyright (c) 2009 The PHP Group                                     |
+  | Copyright (c) 2010 The PHP Group                                     |
   +----------------------------------------------------------------------+
-  | This source file is subject to version 3.0 of the PHP license,       |
+  | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
   | available through the world-wide-web at the following url:           |
-  | http://www.php.net/license/3_0.txt.                                  |
+  | http://www.php.net/license/3_01.txt.                                 |
   | If you did not receive a copy of the PHP license and are unable to   |
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
@@ -38,8 +38,8 @@
 #include <ext/standard/php_smart_str.h>
 
 #include "php_zookeeper.h"
-
-#define DEFAULT_RECV_TIMEOUT 10000
+#include "php_zookeeper_private.h"
+#include "php_zookeeper_session.h"
 
 /****************************************
   Helper macros
@@ -72,6 +72,8 @@ typedef struct {
 } php_zk_t;
 
 static zend_class_entry *zookeeper_ce = NULL;
+
+static int le_zookeeper_connection;
 
 #if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION < 3)
 const zend_fcall_info empty_fcall_info = { 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0 };
@@ -141,7 +143,7 @@ static PHP_METHOD(Zookeeper, connect)
 	char *host;
 	zend_fcall_info fci = empty_fcall_info;
 	zend_fcall_info_cache fcc = empty_fcall_info_cache;
-	long recv_timeout = DEFAULT_RECV_TIMEOUT;
+	long recv_timeout = ZK_G(recv_timeout);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!l", &host, &host_len, &fci, &fcc, &recv_timeout) == FAILURE) {
 		return;
@@ -161,7 +163,7 @@ static PHP_METHOD(Zookeeper, __construct)
 	char *host = NULL;
 	zend_fcall_info fci = empty_fcall_info;
 	zend_fcall_info_cache fcc = empty_fcall_info_cache;
-	long recv_timeout = DEFAULT_RECV_TIMEOUT;
+	long recv_timeout = ZK_G(recv_timeout);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sf!l", &host, &host_len, &fci, &fcc, &recv_timeout) == FAILURE) {
 		ZVAL_NULL(object);
@@ -881,6 +883,7 @@ static void php_aclv_to_array(const struct ACL_vector *aclv, zval *array)
 static void php_zk_init_globals(zend_php_zookeeper_globals *php_zookeeper_globals_p TSRMLS_DC)
 {
 	zend_hash_init_ex(&ZK_G(callbacks), 5, NULL, (dtor_func_t)php_cb_data_destroy, 1, 0);
+	php_zookeeper_globals_p->recv_timeout = 10000;
 }
 
 static void php_zk_destroy_globals(zend_php_zookeeper_globals *php_zookeeper_globals_p TSRMLS_DC)
@@ -1110,10 +1113,31 @@ static void php_zk_register_constants(INIT_FUNC_ARGS)
 }
 /* }}} */
 
+ZEND_RSRC_DTOR_FUNC(php_zookeeper_connection_dtor)
+{
+	if (rsrc->ptr) {
+		php_zookeeper_session *zk_sess = (php_zookeeper_session *)rsrc->ptr;
+		zookeeper_close(zk_sess->zk);
+		pefree(zk_sess, 1);
+		rsrc->ptr = NULL;
+	}
+}
+
+int php_zookeeper_get_connection_le()
+{
+	return le_zookeeper_connection;
+}
+
+PHP_INI_BEGIN()
+	STD_PHP_INI_ENTRY("zookeper.recv_timeout", "10000", PHP_INI_SYSTEM, OnUpdateLong, recv_timeout, zend_php_zookeeper_globals, php_zookeeper_globals)
+PHP_INI_END()
+
 /* {{{ PHP_MINIT_FUNCTION */
 PHP_MINIT_FUNCTION(zookeeper)
 {
 	zend_class_entry ce;
+	
+	le_zookeeper_connection = zend_register_list_destructors_ex(NULL, php_zookeeper_connection_dtor, "Zookeeper persistent connection (sessions)", module_number);
 
 	INIT_CLASS_ENTRY(ce, "Zookeeper", zookeeper_class_methods);
 	zookeeper_ce = zend_register_internal_class(&ce TSRMLS_CC);
@@ -1131,6 +1155,7 @@ PHP_MINIT_FUNCTION(zookeeper)
 	php_zk_init_globals(&php_zookeeper_globals TSRMLS_CC);
 #endif
 
+	php_session_register_module(ps_zookeeper_ptr);
 	return SUCCESS;
 }
 /* }}} */

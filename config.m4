@@ -53,7 +53,7 @@ if test "$PHP_ZOOKEEPER" != "no"; then
     PHP_ADD_LIBRARY_WITH_PATH(zookeeper_mt, $PHP_LIBZOOKEEPER_DIR/lib, ZOOKEEPER_SHARED_LIBADD)
 
     PHP_SUBST(ZOOKEEPER_SHARED_LIBADD)
-    PHP_NEW_EXTENSION(zookeeper, php_zookeeper.c , $ext_shared,,)
+    PHP_NEW_EXTENSION(zookeeper, php_zookeeper.c php_zookeeper_session.c, $ext_shared,,)
 
   fi
 

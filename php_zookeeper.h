@@ -1,11 +1,11 @@
 /*
   +----------------------------------------------------------------------+
-  | Copyright (c) 2009 The PHP Group                                     |
+  | Copyright (c) 2010 The PHP Group                                     |
   +----------------------------------------------------------------------+
-  | This source file is subject to version 3.0 of the PHP license,       |
+  | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
   | available through the world-wide-web at the following url:           |
-  | http://www.php.net/license/3_0.txt.                                  |
+  | http://www.php.net/license/3_01.txt.                                 |
   | If you did not receive a copy of the PHP license and are unable to   |
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
@@ -33,6 +33,7 @@ extern zend_module_entry zookeeper_module_entry;
 
 ZEND_BEGIN_MODULE_GLOBALS(php_zookeeper)
 	HashTable callbacks;
+	long recv_timeout;
 ZEND_END_MODULE_GLOBALS(php_zookeeper)
 
 PHP_MINIT_FUNCTION(zookeeper);
@@ -47,6 +48,16 @@ PHP_MINFO_FUNCTION(zookeeper);
 #else
 #define ZK_G(v) (php_zookeeper_globals.v)
 #endif
+
+
+#include "ext/session/php_session.h"
+
+extern ps_module ps_mod_zookeeper;
+#define ps_zookeeper_ptr &ps_mod_zookeeper
+
+PS_FUNCS(zookeeper);
+
+
 
 #endif /* PHP_ZOOKEEPER_H */
 
