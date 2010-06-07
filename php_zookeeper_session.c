@@ -24,6 +24,10 @@
 
 #define PHP_ZK_PARENT_NODE "/php-sessid"
 
+#define PHP_ZK_SESS_DEFAULT_LOCK_WAIT 150000
+
+#define PHP_ZK_SESS_LOCK_EXPIRATION 30
+
 ZEND_DECLARE_MODULE_GLOBALS(php_zookeeper)
 
 ps_module ps_mod_zookeeper = {
@@ -58,8 +62,6 @@ static php_zookeeper_session *php_zookeeper_session_init(char *save_path TSRMLS_
 			php_error_docref(NULL TSRMLS_CC, E_ERROR, "Failed to create parent node for sessions");
 		}
 	}
-	
-	session->lock = NULL;
 	return session;
 }
 /* }}} */
@@ -92,7 +94,9 @@ static php_zookeeper_session *php_zookeeper_session_get(char *save_path TSRMLS_D
 	if (zend_hash_update(&EG(persistent_list), (char *)plist_key, plist_key_len, (void *)&le, sizeof(le), NULL) == FAILURE) {
 		php_error_docref(NULL TSRMLS_CC, E_ERROR, "Could not register persistent entry for the zk handle");
 	}
+	
 	efree(plist_key);
+	session->is_locked = 0;
 	return session;
 }
 /* }}} */
@@ -101,18 +105,59 @@ static php_zookeeper_session *php_zookeeper_session_get(char *save_path TSRMLS_D
 */
 PS_OPEN_FUNC(zookeeper)
 {
-	struct Stat stat;
 	php_zookeeper_session *session = php_zookeeper_session_get(PS(save_path) TSRMLS_C);
 	
 	if (!session) {
 		PS_SET_MOD_DATA(NULL);
 		return FAILURE;
 	}
-	
 	PS_SET_MOD_DATA(session);
 	return SUCCESS;
 }
 /* }}} */
+
+/* {{{ static int php_zookeeper_sess_lock(php_zookeeper_session *session, const char *key TSRMLS_DC)
+	Locking functionality. Adapted algo from memcached extension
+*/
+static zend_bool php_zookeeper_sess_lock(php_zookeeper_session *session, const char *key TSRMLS_DC)
+{
+	char *lock_path;
+	int lock_path_len;
+	long attempts, lock_maxwait;
+	long lock_wait = ZK_G(sess_lock_wait);
+	time_t expiration;
+
+	/* lock_path if freed when the lock is freed */
+	lock_path_len = spprintf(&lock_path, 512, "%s/%s-lock", PHP_ZK_PARENT_NODE, key);
+
+	if (zkr_lock_init(&(session->lock), session->zk, lock_path, &ZOO_OPEN_ACL_UNSAFE) != 0) {
+		efree(lock_path);
+		return 0;
+	}
+		
+	/* set max timeout for session_start = max_execution_time.  (c) Andrei Darashenka, Richter & Poweleit GmbH */
+	lock_maxwait = zend_ini_long(ZEND_STRS("max_execution_time"), 0);
+	if (lock_maxwait <= 0) {
+		lock_maxwait = PHP_ZK_SESS_LOCK_EXPIRATION;
+	}
+	if (lock_wait == 0) {
+		lock_wait = PHP_ZK_SESS_DEFAULT_LOCK_WAIT;
+	}
+	expiration = SG(global_request_time) + lock_maxwait + 1;
+	attempts   = lock_maxwait * 1000000 / lock_wait;
+
+	do {
+		if (zkr_lock_lock(&(session->lock))) {
+			session->is_locked = 1;
+			return 1;
+		}
+		if (lock_wait > 0) {
+			usleep(lock_wait);
+		}
+	} while(--attempts > 0);
+
+	return 0;
+}
 
 /* {{{ PS_READ_FUNC(zookeeper)
 */
@@ -129,21 +174,10 @@ PS_READ_FUNC(zookeeper)
 	int64_t expiration_time;
 
 	if (ZK_G(session_lock)) {
-		session->lock = emalloc(sizeof(zkr_lock_mutex_t));
-		lock_path_len = spprintf(&lock_path, 512, "%s/%s-lock", PHP_ZK_PARENT_NODE, key);
-	
-		if (zkr_lock_init(session->lock, session->zk, lock_path, &ZOO_OPEN_ACL_UNSAFE) != 0) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to create session mutex");
+		if (!php_zookeeper_sess_lock(session, key TSRMLS_CC)) {
+			php_error_docref(NULL TSRMLS_CC, E_ERROR, "Failed to create session mutex");
 			return FAILURE;
 		}
-		
-		/* TODO: fix this */
-		do {
-			if (zkr_lock_lock(session->lock)) {
-				break;
-			}
-			usleep(1000);
-		} while (retries--);
 	}
 
 	path_len = snprintf(path, 512, "%s/%s", PHP_ZK_PARENT_NODE, key);
@@ -251,12 +285,12 @@ PS_CLOSE_FUNC(zookeeper)
 {
 	ZK_SESS_DATA;
 
-	if (ZK_G(session_lock)) {	
-		(void) zkr_lock_unlock(session->lock);
-		efree(session->lock->path);
+	if (session->is_locked) {	
+		(void) zkr_lock_unlock(&(session->lock));
+		efree(session->lock.path);
 	
-		zkr_lock_destroy(session->lock);
-		efree(session->lock);
+		zkr_lock_destroy(&(session->lock));
+		session->is_locked = 0;
 	}
 
 	PS_SET_MOD_DATA(NULL);
