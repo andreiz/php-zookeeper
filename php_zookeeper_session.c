@@ -20,6 +20,8 @@
 #include "php_zookeeper_session.h"
 #include "SAPI.h"
 
+#ifdef HAVE_ZOOKEEPER_SESSION
+
 #define ZK_SESS_DATA php_zookeeper_session *session = PS_GET_MOD_DATA();
 
 #define PHP_ZK_PARENT_NODE "/php-sessid"
@@ -54,7 +56,11 @@ static php_zookeeper_session *php_zookeeper_session_init(char *save_path TSRMLS_
 	
 	/* Create parent node if it does not exist */
 	if (zoo_exists(session->zk, PHP_ZK_PARENT_NODE, 1, &stat) == ZNONODE) {
-		status = zoo_create(session->zk, PHP_ZK_PARENT_NODE, 0, 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+		int retry_count = 3;
+		do {
+			status = zoo_create(session->zk, PHP_ZK_PARENT_NODE, 0, 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+			retry_count++;
+		} while (status == ZCONNECTIONLOSS && retry_count--);
 		
 		if (status != ZOK) {
 			zookeeper_close(session->zk);
@@ -128,7 +134,7 @@ static zend_bool php_zookeeper_sess_lock(php_zookeeper_session *session, const c
 	time_t expiration;
 
 	/* lock_path if freed when the lock is freed */
-	lock_path_len = spprintf(&lock_path, 512, "%s/%s-lock", PHP_ZK_PARENT_NODE, key);
+	lock_path_len = spprintf(&lock_path, 512 + 5, "%s/%s-lock", PHP_ZK_PARENT_NODE, key);
 
 	if (zkr_lock_init(&(session->lock), session->zk, lock_path, &ZOO_OPEN_ACL_UNSAFE) != 0) {
 		efree(lock_path);
@@ -164,13 +170,9 @@ static zend_bool php_zookeeper_sess_lock(php_zookeeper_session *session, const c
 PS_READ_FUNC(zookeeper)
 {
 	ZK_SESS_DATA;
-	int status, path_len, lock_path_len;
-	char path[512], *lock_path;
+	int status, path_len;
 	struct Stat stat;
-	
-	char *buffer;
-	int retries = 10, buffer_len, retry_count = 0;
-	
+	int retry_count;
 	int64_t expiration_time;
 
 	if (ZK_G(session_lock)) {
@@ -180,13 +182,13 @@ PS_READ_FUNC(zookeeper)
 		}
 	}
 
-	path_len = snprintf(path, 512, "%s/%s", PHP_ZK_PARENT_NODE, key);
+	path_len = snprintf(session->path, 512, "%s/%s", PHP_ZK_PARENT_NODE, key);
 	
-	retry_count = 0;
+	retry_count = 3;
 	do {
-		status = zoo_exists(session->zk, path, 1, &stat);
+		status = zoo_exists(session->zk, session->path, 1, &stat);
 		retry_count++;
-	} while (status == ZCONNECTIONLOSS && retry_count < 3);
+	} while (status == ZCONNECTIONLOSS && retry_count--);
 
 	if (status != ZOK) {
 		*val    = NULL;
@@ -198,11 +200,11 @@ PS_READ_FUNC(zookeeper)
 
 	/* The session has expired */
 	if (stat.mtime < expiration_time) {
-		retry_count = 0;
+		retry_count = 3;
 		do {
-			status = zoo_delete(session->zk, path, -1);
+			status = zoo_delete(session->zk, session->path, -1);
 			retry_count++;
-		} while (status == ZCONNECTIONLOSS && retry_count < 3);
+		} while (status == ZCONNECTIONLOSS && retry_count--);
 
 		*val    = NULL;
 		*vallen = 0;
@@ -212,11 +214,11 @@ PS_READ_FUNC(zookeeper)
 	*val    = emalloc(stat.dataLength);
 	*vallen = stat.dataLength;
 	
-	retry_count = 0;
+	retry_count = 3;
 	do {
-		status = zoo_get(session->zk, path, 0, *val, vallen, &stat);
+		status = zoo_get(session->zk, session->path, 0, *val, vallen, &stat);
 		retry_count++;
-	} while (status == ZCONNECTIONLOSS && retry_count < 3);
+	} while (status == ZCONNECTIONLOSS && retry_count--);
 
 	if (status != ZOK) {
 		efree(*val);
@@ -233,27 +235,24 @@ PS_READ_FUNC(zookeeper)
 PS_WRITE_FUNC(zookeeper)
 {
 	ZK_SESS_DATA;
-	int status, path_len, retry_count;
-	char path[512];
+	int status, retry_count;
 	struct Stat stat;
-	
-	path_len = snprintf(path, 512, "%s/%s", PHP_ZK_PARENT_NODE, key);
-	
-	retry_count = 0;
+
+	retry_count = 3;
 	do {
-		status = zoo_exists(session->zk, path, 1, &stat);
+		status = zoo_exists(session->zk, session->path, 1, &stat);
 		retry_count++;
-	} while (status == ZCONNECTIONLOSS && retry_count < 3);
+	} while (status == ZCONNECTIONLOSS && retry_count--);
 	
-	retry_count = 0;	
+	retry_count = 3;	
 	do {	
 		if (status != ZOK) {
-			status = zoo_create(session->zk, path, val, vallen, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+			status = zoo_create(session->zk, session->path, val, vallen, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
 		} else {
-			status = zoo_set(session->zk, path, val, vallen, -1);
+			status = zoo_set(session->zk, session->path, val, vallen, -1);
 		}
 		retry_count++;
-	} while (status == ZCONNECTIONLOSS && retry_count < 3);
+	} while (status == ZCONNECTIONLOSS && retry_count--);
 
 	return (status == ZOK) ? SUCCESS : FAILURE;
 }
@@ -262,29 +261,52 @@ PS_WRITE_FUNC(zookeeper)
 PS_DESTROY_FUNC(zookeeper)
 {
 	ZK_SESS_DATA;
-	int path_len, status, retry_count;
-	char path[512];
-	
-	path_len = snprintf(path, 512, "%s/%s", PHP_ZK_PARENT_NODE, key);
-	
-	retry_count = 0;
+	int status, retry_count;
+
+	retry_count = 3;
 	do {
-		status = zoo_delete(session->zk, path, -1);
+		status = zoo_delete(session->zk, session->path, -1);
 		retry_count++;
-	} while (status == ZCONNECTIONLOSS && retry_count < 3);
+	} while (status == ZCONNECTIONLOSS && retry_count--);
 
 	return (status == ZOK) ? SUCCESS : FAILURE;
 }
 
 PS_GC_FUNC(zookeeper)
 {
-	/* TODO: add garbage collection */
+	struct Stat stat;
+	struct String_vector nodes;
+	int i, status;
+	int64_t expiration_time;
+	ZK_SESS_DATA;
+	
+	expiration_time = (int64_t) (SG(global_request_time) - PS(gc_maxlifetime)) * 1000;
+	status          = zoo_get_children(session->zk, PHP_ZK_PARENT_NODE, 0, &nodes);
+
+	if (status == ZOK) {
+		for (i = 0; i < nodes.count; i++) {
+			char path[512];
+			int path_len;
+
+			path_len = snprintf(path, 512, "%s/%s", PHP_ZK_PARENT_NODE, nodes.data[i]);
+			
+			if (zoo_exists(session->zk, path, 1, &stat) == ZOK) {
+				/* TODO: should lock here? */
+				if (stat.mtime < expiration_time) {
+					(void) zoo_delete(session->zk, path, -1);
+				}
+			}
+		}
+	}
+	return SUCCESS;
 }
+
+static void php_zk_sync_completion(int rc, const char *value, const void *data) {}
 
 PS_CLOSE_FUNC(zookeeper)
 {
 	ZK_SESS_DATA;
-
+	
 	if (session->is_locked) {	
 		(void) zkr_lock_unlock(&(session->lock));
 		efree(session->lock.path);
@@ -292,10 +314,14 @@ PS_CLOSE_FUNC(zookeeper)
 		zkr_lock_destroy(&(session->lock));
 		session->is_locked = 0;
 	}
-
+	
+	/* TODO: is this needed? */
+	// zoo_async(session->zk, session->path, php_zk_sync_completion, (const void *) session);
 	PS_SET_MOD_DATA(NULL);
 	return SUCCESS;
 }
+
+#endif /* HAVE_ZOOKEEPER_SESSION */
 
 /*
  * Local variables:

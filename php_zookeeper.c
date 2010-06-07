@@ -73,7 +73,9 @@ typedef struct {
 
 static zend_class_entry *zookeeper_ce = NULL;
 
+#ifdef HAVE_ZOOKEEPER_SESSION
 static int le_zookeeper_connection;
+#endif
 
 #if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION < 3)
 const zend_fcall_info empty_fcall_info = { 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0 };
@@ -1114,6 +1116,7 @@ static void php_zk_register_constants(INIT_FUNC_ARGS)
 }
 /* }}} */
 
+#ifdef HAVE_ZOOKEEPER_SESSION
 ZEND_RSRC_DTOR_FUNC(php_zookeeper_connection_dtor)
 {
 	if (rsrc->ptr) {
@@ -1128,21 +1131,23 @@ int php_zookeeper_get_connection_le()
 {
 	return le_zookeeper_connection;
 }
+#endif
 
 PHP_INI_BEGIN()
 	STD_PHP_INI_ENTRY("zookeeper.recv_timeout",		"10000",	PHP_INI_ALL,	OnUpdateLongGEZero,	recv_timeout,	zend_php_zookeeper_globals, php_zookeeper_globals)
+#ifdef HAVE_ZOOKEEPER_SESSION
 	STD_PHP_INI_ENTRY("zookeeper.session_lock",		"1",		PHP_INI_SYSTEM, OnUpdateBool,		session_lock,	zend_php_zookeeper_globals, php_zookeeper_globals)
 	STD_PHP_INI_ENTRY("zookeeper.sess_lock_wait",	"150000",	PHP_INI_ALL,	OnUpdateLongGEZero,	sess_lock_wait,	zend_php_zookeeper_globals,	php_zookeeper_globals)
-	
+#endif
 PHP_INI_END()
 
 /* {{{ PHP_MINIT_FUNCTION */
 PHP_MINIT_FUNCTION(zookeeper)
 {
 	zend_class_entry ce;
-
+#ifdef HAVE_ZOOKEEPER_SESSION
 	le_zookeeper_connection = zend_register_list_destructors_ex(NULL, php_zookeeper_connection_dtor, "Zookeeper persistent connection (sessions)", module_number);
-
+#endif
 	INIT_CLASS_ENTRY(ce, "Zookeeper", zookeeper_class_methods);
 	zookeeper_ce = zend_register_internal_class(&ce TSRMLS_CC);
 	zookeeper_ce->create_object = php_zk_new;
@@ -1160,7 +1165,9 @@ PHP_MINIT_FUNCTION(zookeeper)
 #endif
 
 	REGISTER_INI_ENTRIES();
+#ifdef HAVE_ZOOKEEPER_SESSION
 	php_session_register_module(ps_zookeeper_ptr);
+#endif
 	return SUCCESS;
 }
 /* }}} */

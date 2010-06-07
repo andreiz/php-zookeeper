@@ -22,6 +22,10 @@
 #include <zookeeper.h>
 #include <php.h>
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 extern zend_module_entry zookeeper_module_entry;
 #define phpext_zookeeper_ptr &zookeeper_module_entry
 
@@ -51,6 +55,7 @@ PHP_MINFO_FUNCTION(zookeeper);
 #define ZK_G(v) (php_zookeeper_globals.v)
 #endif
 
+#ifdef HAVE_ZOOKEEPER_SESSION
 
 #include "ext/session/php_session.h"
 
@@ -59,7 +64,7 @@ extern ps_module ps_mod_zookeeper;
 
 PS_FUNCS(zookeeper);
 
-
+#endif /* HAVE_ZOOKEEPER_SESSION */ 
 
 #endif /* PHP_ZOOKEEPER_H */
 
