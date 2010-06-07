@@ -1130,6 +1130,7 @@ int php_zookeeper_get_connection_le()
 
 PHP_INI_BEGIN()
 	STD_PHP_INI_ENTRY("zookeper.recv_timeout", "10000", PHP_INI_SYSTEM, OnUpdateLong, recv_timeout, zend_php_zookeeper_globals, php_zookeeper_globals)
+	STD_PHP_INI_ENTRY("zookeper.session_lock", "1", PHP_INI_SYSTEM, OnUpdateBool, session_lock, zend_php_zookeeper_globals, php_zookeeper_globals)
 PHP_INI_END()
 
 /* {{{ PHP_MINIT_FUNCTION */

@@ -57,6 +57,8 @@ static php_zookeeper_session *php_zookeeper_session_init(char *save_path TSRMLS_
 			php_error_docref(NULL TSRMLS_CC, E_ERROR, "Failed to create parent node for sessions");
 		}
 	}
+	
+	session->lock = NULL;
 	return session;
 }
 /* }}} */
@@ -116,16 +118,36 @@ PS_OPEN_FUNC(zookeeper)
 PS_READ_FUNC(zookeeper)
 {
 	ZK_SESS_DATA;
-	int status, path_len;
-	char path[512];
+	int status, path_len, lock_path_len;
+	char path[512], *lock_path;
 	struct Stat stat;
 	
 	char *buffer;
-	int buffer_len;
+	int buffer_len, retry_count = 0;
+	
+	if (ZK_G(session_lock)) {
+		session->lock = emalloc(sizeof(zkr_lock_mutex_t));
+		lock_path_len = spprintf(&lock_path, 512, "%s/%s-lock", PHP_ZK_PARENT_NODE, key);
+	
+		if (zkr_lock_init(session->lock, session->zk, lock_path, &ZOO_OPEN_ACL_UNSAFE) != 0) {
+			php_error_docref(NULL TSRMLS_CC, E_ERROR, "Failed to create session mutex");
+			return FAILURE;
+		}
+	
+		if (!zkr_lock_lock(session->lock)) {
+			php_error_docref(NULL TSRMLS_CC, E_ERROR, "Failed to acquire the lock");
+			return FAILURE;
+		}
+	}
 	
 	path_len = snprintf(path, 512, "%s/%s", PHP_ZK_PARENT_NODE, key);
-	status   = zoo_exists(session->zk, path, 1, &stat);
 	
+	retry_count = 0;
+	do {
+		status = zoo_exists(session->zk, path, 1, &stat);
+		retry_count++;
+	} while (status == ZCONNECTIONLOSS && retry_count < 3);
+
 	if (status != ZOK) {
 		*val    = estrdup("");
 		*vallen = 0; 
@@ -135,7 +157,11 @@ PS_READ_FUNC(zookeeper)
 	*val    = emalloc(stat.dataLength);
 	*vallen = stat.dataLength;
 	
-	status = zoo_get(session->zk, path, 0, *val, vallen, &stat);
+	retry_count = 0;
+	do {
+		status = zoo_get(session->zk, path, 0, *val, vallen, &stat);
+		retry_count++;
+	} while (status == ZCONNECTIONLOSS && retry_count < 3);
 
 	if (status != ZOK) {
 		efree(*val);
@@ -189,6 +215,15 @@ PS_GC_FUNC(zookeeper)
 PS_CLOSE_FUNC(zookeeper)
 {
 	ZK_SESS_DATA;
+	
+	if (ZK_G(session_lock)) {	
+		(void) zkr_lock_unlock(session->lock);
+		efree(session->lock->path);
+	
+		zkr_lock_destroy(session->lock);
+		efree(session->lock);
+	}
+	
 	PS_SET_MOD_DATA(NULL);
 	return SUCCESS;
 }
