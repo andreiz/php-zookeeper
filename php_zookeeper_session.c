@@ -18,6 +18,7 @@
 #include "php_zookeeper.h"
 #include "php_zookeeper_private.h"
 #include "php_zookeeper_session.h"
+#include "SAPI.h"
 
 #define ZK_SESS_DATA php_zookeeper_session *session = PS_GET_MOD_DATA();
 
@@ -125,17 +126,19 @@ PS_READ_FUNC(zookeeper)
 	char *buffer;
 	int buffer_len, retry_count = 0;
 	
+	int64_t expiration_time;
+
 	if (ZK_G(session_lock)) {
 		session->lock = emalloc(sizeof(zkr_lock_mutex_t));
 		lock_path_len = spprintf(&lock_path, 512, "%s/%s-lock", PHP_ZK_PARENT_NODE, key);
 	
 		if (zkr_lock_init(session->lock, session->zk, lock_path, &ZOO_OPEN_ACL_UNSAFE) != 0) {
-			php_error_docref(NULL TSRMLS_CC, E_ERROR, "Failed to create session mutex");
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to create session mutex");
 			return FAILURE;
 		}
 	
 		if (!zkr_lock_lock(session->lock)) {
-			php_error_docref(NULL TSRMLS_CC, E_ERROR, "Failed to acquire the lock");
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to acquire the lock");
 			return FAILURE;
 		}
 	}
@@ -153,6 +156,21 @@ PS_READ_FUNC(zookeeper)
 		*vallen = 0; 
 		return SUCCESS;
 	}
+
+	expiration_time = (int64_t) (SG(global_request_time) - PS(gc_maxlifetime)) * 1000;
+
+	/* The session has expired */
+	if (stat.mtime < expiration_time) {
+		retry_count = 0;
+		do {
+			status = zoo_delete(session->zk, path, -1);
+			retry_count++;
+		} while (status == ZCONNECTIONLOSS && retry_count < 3);
+
+		*val    = estrdup("");
+		*vallen = 0;
+		return SUCCESS;
+	}
 	
 	*val    = emalloc(stat.dataLength);
 	*vallen = stat.dataLength;
@@ -165,7 +183,7 @@ PS_READ_FUNC(zookeeper)
 
 	if (status != ZOK) {
 		efree(*val);
-		*val    = estrdup("");
+		*val    = NULL;
 		*vallen = 0;
 		return FAILURE;
 	}
@@ -178,19 +196,28 @@ PS_READ_FUNC(zookeeper)
 PS_WRITE_FUNC(zookeeper)
 {
 	ZK_SESS_DATA;
-	int status, path_len;
+	int status, path_len, retry_count;
 	char path[512];
 	struct Stat stat;
 	
 	path_len = snprintf(path, 512, "%s/%s", PHP_ZK_PARENT_NODE, key);
-	status   = zoo_exists(session->zk, path, 1, &stat);
 	
-	if (status != ZOK) {
-		status = zoo_create(session->zk, path, val, vallen, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
-	} else {
-		status = zoo_set(session->zk, path, val, vallen, -1);
-	}
+	retry_count = 0;
+	do {
+		status = zoo_exists(session->zk, path, 1, &stat);
+		retry_count++;
+	} while (status == ZCONNECTIONLOSS && retry_count < 3);
 	
+	retry_count = 0;	
+	do {	
+		if (status != ZOK) {
+			status = zoo_create(session->zk, path, val, vallen, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+		} else {
+			status = zoo_set(session->zk, path, val, vallen, -1);
+		}
+		retry_count++;
+	} while (status == ZCONNECTIONLOSS && retry_count < 3);
+
 	return (status == ZOK) ? SUCCESS : FAILURE;
 }
 /* }}} */
@@ -198,11 +225,16 @@ PS_WRITE_FUNC(zookeeper)
 PS_DESTROY_FUNC(zookeeper)
 {
 	ZK_SESS_DATA;
-	int path_len, status;
+	int path_len, status, retry_count;
 	char path[512];
 	
 	path_len = snprintf(path, 512, "%s/%s", PHP_ZK_PARENT_NODE, key);
-	status   = zoo_delete(session->zk, path, -1);
+	
+	retry_count = 0;
+	do {
+		status = zoo_delete(session->zk, path, -1);
+		retry_count++;
+	} while (status == ZCONNECTIONLOSS && retry_count < 3);
 
 	return (status == ZOK) ? SUCCESS : FAILURE;
 }

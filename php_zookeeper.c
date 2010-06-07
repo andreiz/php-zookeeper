@@ -884,6 +884,7 @@ static void php_zk_init_globals(zend_php_zookeeper_globals *php_zookeeper_global
 {
 	zend_hash_init_ex(&ZK_G(callbacks), 5, NULL, (dtor_func_t)php_cb_data_destroy, 1, 0);
 	php_zookeeper_globals_p->recv_timeout = 10000;
+	php_zookeeper_globals_p->session_lock = 1;
 }
 
 static void php_zk_destroy_globals(zend_php_zookeeper_globals *php_zookeeper_globals_p TSRMLS_DC)
