@@ -1130,15 +1130,15 @@ int php_zookeeper_get_connection_le()
 }
 
 PHP_INI_BEGIN()
-	STD_PHP_INI_ENTRY("zookeper.recv_timeout", "10000", PHP_INI_SYSTEM, OnUpdateLong, recv_timeout, zend_php_zookeeper_globals, php_zookeeper_globals)
-	STD_PHP_INI_ENTRY("zookeper.session_lock", "1", PHP_INI_SYSTEM, OnUpdateBool, session_lock, zend_php_zookeeper_globals, php_zookeeper_globals)
+	STD_PHP_INI_ENTRY("zookeeper.recv_timeout", "10000", PHP_INI_SYSTEM, OnUpdateLong, recv_timeout, zend_php_zookeeper_globals, php_zookeeper_globals)
+	STD_PHP_INI_ENTRY("zookeeper.session_lock", "1", PHP_INI_SYSTEM, OnUpdateBool, session_lock, zend_php_zookeeper_globals, php_zookeeper_globals)
 PHP_INI_END()
 
 /* {{{ PHP_MINIT_FUNCTION */
 PHP_MINIT_FUNCTION(zookeeper)
 {
 	zend_class_entry ce;
-	
+
 	le_zookeeper_connection = zend_register_list_destructors_ex(NULL, php_zookeeper_connection_dtor, "Zookeeper persistent connection (sessions)", module_number);
 
 	INIT_CLASS_ENTRY(ce, "Zookeeper", zookeeper_class_methods);
@@ -1157,6 +1157,7 @@ PHP_MINIT_FUNCTION(zookeeper)
 	php_zk_init_globals(&php_zookeeper_globals TSRMLS_CC);
 #endif
 
+	REGISTER_INI_ENTRIES();
 	php_session_register_module(ps_zookeeper_ptr);
 	return SUCCESS;
 }
@@ -1171,6 +1172,7 @@ PHP_MSHUTDOWN_FUNCTION(zookeeper)
     php_zk_destroy_globals(&php_zookeeper_globals TSRMLS_CC);
 #endif
 
+	UNREGISTER_INI_ENTRIES();
 	return SUCCESS;
 }
 /* }}} */

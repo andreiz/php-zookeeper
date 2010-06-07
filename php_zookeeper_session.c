@@ -142,7 +142,7 @@ PS_READ_FUNC(zookeeper)
 			return FAILURE;
 		}
 	}
-	
+
 	path_len = snprintf(path, 512, "%s/%s", PHP_ZK_PARENT_NODE, key);
 	
 	retry_count = 0;
@@ -247,7 +247,7 @@ PS_GC_FUNC(zookeeper)
 PS_CLOSE_FUNC(zookeeper)
 {
 	ZK_SESS_DATA;
-	
+
 	if (ZK_G(session_lock)) {	
 		(void) zkr_lock_unlock(session->lock);
 		efree(session->lock->path);
@@ -255,7 +255,7 @@ PS_CLOSE_FUNC(zookeeper)
 		zkr_lock_destroy(session->lock);
 		efree(session->lock);
 	}
-	
+
 	PS_SET_MOD_DATA(NULL);
 	return SUCCESS;
 }
