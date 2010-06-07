@@ -124,7 +124,7 @@ PS_READ_FUNC(zookeeper)
 	struct Stat stat;
 	
 	char *buffer;
-	int buffer_len, retry_count = 0;
+	int retries = 10, buffer_len, retry_count = 0;
 	
 	int64_t expiration_time;
 
@@ -136,11 +136,14 @@ PS_READ_FUNC(zookeeper)
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to create session mutex");
 			return FAILURE;
 		}
-	
-		if (!zkr_lock_lock(session->lock)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to acquire the lock");
-			return FAILURE;
-		}
+		
+		/* TODO: fix this */
+		do {
+			if (zkr_lock_lock(session->lock)) {
+				break;
+			}
+			usleep(1000);
+		} while (retries--);
 	}
 
 	path_len = snprintf(path, 512, "%s/%s", PHP_ZK_PARENT_NODE, key);
