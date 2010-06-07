@@ -152,9 +152,9 @@ PS_READ_FUNC(zookeeper)
 	} while (status == ZCONNECTIONLOSS && retry_count < 3);
 
 	if (status != ZOK) {
-		*val    = estrdup("");
-		*vallen = 0; 
-		return SUCCESS;
+		*val    = NULL;
+		*vallen = 0;
+		return FAILURE;
 	}
 
 	expiration_time = (int64_t) (SG(global_request_time) - PS(gc_maxlifetime)) * 1000;
@@ -167,9 +167,9 @@ PS_READ_FUNC(zookeeper)
 			retry_count++;
 		} while (status == ZCONNECTIONLOSS && retry_count < 3);
 
-		*val    = estrdup("");
+		*val    = NULL;
 		*vallen = 0;
-		return SUCCESS;
+		return FAILURE;
 	}
 	
 	*val    = emalloc(stat.dataLength);
