@@ -123,7 +123,7 @@ static void php_zookeeper_connect_impl(INTERNAL_FUNCTION_PARAMETERS, char *host,
 	i_obj = (php_zk_t *) zend_object_store_get_object(object TSRMLS_CC);
 
 	if (fci->size != 0) {
-		cb_data = php_cb_data_new(fci, fcc, 0);
+		cb_data = php_cb_data_new(fci, fcc, 0 TSRMLS_CC);
 	}
 	zk = zookeeper_init(host, (fci->size != 0) ? php_zk_watcher_marshal : NULL,
 						recv_timeout, 0, cb_data, 0);
@@ -263,7 +263,7 @@ static PHP_METHOD(Zookeeper, getChildren)
 	ZK_METHOD_FETCH_OBJECT;
 
 	if (fci.size != 0) {
-		cb_data = php_cb_data_new(&fci, &fcc, 1);
+		cb_data = php_cb_data_new(&fci, &fcc, 1 TSRMLS_CC);
 	}
 	status = zoo_wget_children(i_obj->zk, path,
 							   (fci.size != 0) ? php_zk_watcher_marshal : NULL,
@@ -305,7 +305,7 @@ static PHP_METHOD(Zookeeper, get)
 	ZK_METHOD_FETCH_OBJECT;
 
 	if (fci.size != 0) {
-		cb_data = php_cb_data_new(&fci, &fcc, 1);
+		cb_data = php_cb_data_new(&fci, &fcc, 1 TSRMLS_CC);
 	}
 	status = zoo_wget(i_obj->zk, path, (fci.size != 0) ? php_zk_watcher_marshal : NULL,
 					  cb_data, buffer, &buffer_len, &stat);
@@ -344,7 +344,7 @@ static PHP_METHOD(Zookeeper, exists)
 	ZK_METHOD_FETCH_OBJECT;
 
 	if (fci.size != 0) {
-		cb_data = php_cb_data_new(&fci, &fcc, 1);
+		cb_data = php_cb_data_new(&fci, &fcc, 1 TSRMLS_CC);
 	}
 	status = zoo_wexists(i_obj->zk, path, (fci.size != 0) ? php_zk_watcher_marshal : NULL,
 						 cb_data, &stat);
@@ -585,7 +585,7 @@ static PHP_METHOD(Zookeeper, addAuth)
 	ZK_METHOD_FETCH_OBJECT;
 
 	if (fci.size != 0) {
-		cb_data = php_cb_data_new(&fci, &fcc, 0);
+		cb_data = php_cb_data_new(&fci, &fcc, 0 TSRMLS_CC);
 	}
 	status = zoo_add_auth(i_obj->zk, scheme, cert, cert_len,
 						  (fci.size != 0) ? php_zk_completion_marshal : NULL, cb_data);
@@ -617,7 +617,7 @@ static PHP_METHOD(Zookeeper, setWatcher)
 	if (i_obj->cb_data) {
 		zend_hash_index_del(&ZK_G(callbacks), i_obj->cb_data->h);
 	}
-	cb_data = php_cb_data_new(&fci, &fcc, 0);
+	cb_data = php_cb_data_new(&fci, &fcc, 0 TSRMLS_CC);
 	zoo_set_watcher(i_obj->zk, php_zk_watcher_marshal);
 	i_obj->cb_data = cb_data;
 

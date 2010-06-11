@@ -30,8 +30,6 @@
 
 #define PHP_ZK_SESS_LOCK_EXPIRATION 30
 
-ZEND_DECLARE_MODULE_GLOBALS(php_zookeeper)
-
 ps_module ps_mod_zookeeper = {
 	PS_MOD(zookeeper)
 };
@@ -111,7 +109,7 @@ static php_zookeeper_session *php_zookeeper_session_get(char *save_path TSRMLS_D
 */
 PS_OPEN_FUNC(zookeeper)
 {
-	php_zookeeper_session *session = php_zookeeper_session_get(PS(save_path) TSRMLS_C);
+	php_zookeeper_session *session = php_zookeeper_session_get(PS(save_path) TSRMLS_CC);
 	
 	if (!session) {
 		PS_SET_MOD_DATA(NULL);

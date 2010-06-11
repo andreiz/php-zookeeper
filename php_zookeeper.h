@@ -49,6 +49,8 @@ PHP_MINFO_FUNCTION(zookeeper);
 
 #define PHP_ZOOKEEPER_VERSION "0.1.0"
 
+ZEND_EXTERN_MODULE_GLOBALS(php_zookeeper)
+
 #ifdef ZTS
 #define ZK_G(v) TSRMG(php_zookeeper_globals_id, zend_php_zookeeper_globals *, v)
 #else
