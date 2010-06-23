@@ -714,7 +714,9 @@ static php_cb_data_t* php_cb_data_new(zend_fcall_info *fci, zend_fcall_info_cach
 static void php_cb_data_destroy(php_cb_data_t **entry)
 {
 	php_cb_data_t *cbd = *(php_cb_data_t **)entry;
-	efree(cbd);
+	if (cbd) {
+		efree(cbd);
+	}
 }
 
 
