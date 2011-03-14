@@ -255,7 +255,7 @@ static PHP_METHOD(Zookeeper, getChildren)
 	int i, status = ZOK;
 	ZK_METHOD_INIT_VARS;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f", &path, &path_len, &fci,
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!", &path, &path_len, &fci,
 							  &fcc) == FAILURE) {
 		return;
 	}
