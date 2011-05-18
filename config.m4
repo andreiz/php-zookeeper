@@ -49,7 +49,7 @@ if test "$PHP_ZOOKEEPER" != "no"; then
   else
     AC_MSG_RESULT([$PHP_LIBZOOKEEPER_DIR])
     if test -r "$PHP_LIBZOOKEEPER_DIR/include/zookeeper.h"; then
-      PHP_LIBZOOKEEPER_INCDIR="$PHP_LIBZOOKEEPER_DIR/include/c-client-src"
+      PHP_LIBZOOKEEPER_INCDIR="$PHP_LIBZOOKEEPER_DIR/include"
     elif test -r "$PHP_LIBZOOKEEPER_DIR/include/zookeeper/zookeeper.h"; then
       PHP_LIBZOOKEEPER_INCDIR="$PHP_LIBZOOKEEPER_DIR/include/zookeeper"
     fi
