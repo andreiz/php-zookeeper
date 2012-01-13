@@ -15,9 +15,9 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <email>andrei@php.net</email>
   <active>yes</active>
  </lead>
- <date>2012-01-12</date>
+ <date>2012-01-13</date>
  <version>
-  <release>0.2.0</release>
+  <release>0.2.1</release>
   <api>0.2.0</api>
  </version>
  <stability>
@@ -26,12 +26,9 @@ http://pear.php.net/dtd/package-2.0.xsd">
  </stability>
  <license uri="http://www.php.net/license">PHP</license>
  <notes>
-- Added session handler support
-- Added connect() and delete methods
-- Bug fixes
+- Package up missed source files
  </notes>
 
- </notes>
  <contents>
   <dir name="/">
    <file role='doc' name='README.markdown'/>
@@ -42,6 +39,11 @@ http://pear.php.net/dtd/package-2.0.xsd">
    <file role='src' name='config.m4'/>
    <file role='src' name='php_zookeeper.c'/>
    <file role='src' name='php_zookeeper.h'/>
+   <file role='src' name='php_zookeeper_private.h'/>
+   <file role='src' name='php_zookeeper_session.c'/>
+   <file role='src' name='php_zookeeper_session.h'/>
+   <file role='src' name='zoo_lock.c'/>
+   <file role='src' name='zoo_lock.h'/>
   </dir> <!-- / -->
  </contents>
  <dependencies>
@@ -59,6 +61,15 @@ http://pear.php.net/dtd/package-2.0.xsd">
  <providesextension>zookeeper</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability><release>beta</release><api>beta</api></stability>
+   <version><release>0.2.1</release><api>0.2.0</api></version>
+   <date>2012-01-13</date>
+   <notes>
+- Package up missed source files
+   </notes>
+  </release>
+
   <release>
    <stability><release>beta</release><api>beta</api></stability>
    <version><release>0.2.0</release><api>0.2.0</api></version>
