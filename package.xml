@@ -15,10 +15,10 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <email>andrei@php.net</email>
   <active>yes</active>
  </lead>
- <date>2009-10-15</date>
+ <date>2012-01-12</date>
  <version>
-  <release>0.1.0</release>
-  <api>0.1.0</api>
+  <release>0.2.0</release>
+  <api>0.2.0</api>
  </version>
  <stability>
   <release>beta</release>
@@ -26,7 +26,11 @@ http://pear.php.net/dtd/package-2.0.xsd">
  </stability>
  <license uri="http://www.php.net/license">PHP</license>
  <notes>
-- Initial PECL release
+- Added session handler support
+- Added connect() and delete methods
+- Bug fixes
+ </notes>
+
  </notes>
  <contents>
   <dir name="/">
@@ -55,6 +59,17 @@ http://pear.php.net/dtd/package-2.0.xsd">
  <providesextension>zookeeper</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability><release>beta</release><api>beta</api></stability>
+   <version><release>0.2.0</release><api>0.2.0</api></version>
+   <date>2012-01-12</date>
+   <notes>
+- Added session handler support
+- Added connect() and delete methods
+- Bug fixes
+   </notes>
+  </release>
+
   <release>
    <stability><release>beta</release><api>beta</api></stability>
    <version><release>0.1.0</release><api>0.1.0</api></version>

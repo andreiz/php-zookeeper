@@ -40,18 +40,18 @@ ps_module ps_mod_zookeeper = {
 static php_zookeeper_session *php_zookeeper_session_init(char *save_path TSRMLS_DC)
 {
 	struct Stat stat;
-	
+
 	int status, recv_timeout = ZK_G(recv_timeout);
 	php_zookeeper_session *session;
-	
+
 	session     = pecalloc(1, sizeof(php_zookeeper_session), 1);
 	session->zk = zookeeper_init(save_path, NULL, recv_timeout, 0, NULL, 0);
-	
+
 	if (!session->zk) {
 		efree(session);
 		return NULL;
 	}
-	
+
 	/* Create parent node if it does not exist */
 	if (zoo_exists(session->zk, PHP_ZK_PARENT_NODE, 1, &stat) == ZNONODE) {
 		int retry_count = 3;
@@ -59,7 +59,7 @@ static php_zookeeper_session *php_zookeeper_session_init(char *save_path TSRMLS_
 			status = zoo_create(session->zk, PHP_ZK_PARENT_NODE, 0, 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
 			retry_count++;
 		} while (status == ZCONNECTIONLOSS && retry_count--);
-		
+
 		if (status != ZOK) {
 			zookeeper_close(session->zk);
 			efree(session);
@@ -90,7 +90,7 @@ static php_zookeeper_session *php_zookeeper_session_get(char *save_path TSRMLS_D
 			return (php_zookeeper_session *) le_p->ptr;
 		}
 	}
-	
+
 	session = php_zookeeper_session_init(save_path TSRMLS_CC);
 	le.type = php_zookeeper_get_connection_le();
 	le.ptr  = session;
@@ -98,19 +98,19 @@ static php_zookeeper_session *php_zookeeper_session_get(char *save_path TSRMLS_D
 	if (zend_hash_update(&EG(persistent_list), (char *)plist_key, plist_key_len, (void *)&le, sizeof(le), NULL) == FAILURE) {
 		php_error_docref(NULL TSRMLS_CC, E_ERROR, "Could not register persistent entry for the zk handle");
 	}
-	
+
 	efree(plist_key);
 	session->is_locked = 0;
 	return session;
 }
 /* }}} */
 
-/* {{{ PS_OPEN_FUNC(zookeeper) 
+/* {{{ PS_OPEN_FUNC(zookeeper)
 */
 PS_OPEN_FUNC(zookeeper)
 {
 	php_zookeeper_session *session = php_zookeeper_session_get(PS(save_path) TSRMLS_CC);
-	
+
 	if (!session) {
 		PS_SET_MOD_DATA(NULL);
 		return FAILURE;
@@ -138,7 +138,7 @@ static zend_bool php_zookeeper_sess_lock(php_zookeeper_session *session, const c
 		efree(lock_path);
 		return 0;
 	}
-		
+
 	/* set max timeout for session_start = max_execution_time.  (c) Andrei Darashenka, Richter & Poweleit GmbH */
 	lock_maxwait = zend_ini_long(ZEND_STRS("max_execution_time"), 0);
 	if (lock_maxwait <= 0) {
@@ -181,7 +181,7 @@ PS_READ_FUNC(zookeeper)
 	}
 
 	path_len = snprintf(session->path, 512, "%s/%s", PHP_ZK_PARENT_NODE, key);
-	
+
 	retry_count = 3;
 	do {
 		status = zoo_exists(session->zk, session->path, 1, &stat);
@@ -208,10 +208,10 @@ PS_READ_FUNC(zookeeper)
 		*vallen = 0;
 		return FAILURE;
 	}
-	
+
 	*val    = emalloc(stat.dataLength);
 	*vallen = stat.dataLength;
-	
+
 	retry_count = 3;
 	do {
 		status = zoo_get(session->zk, session->path, 0, *val, vallen, &stat);
@@ -241,9 +241,9 @@ PS_WRITE_FUNC(zookeeper)
 		status = zoo_exists(session->zk, session->path, 1, &stat);
 		retry_count++;
 	} while (status == ZCONNECTIONLOSS && retry_count--);
-	
-	retry_count = 3;	
-	do {	
+
+	retry_count = 3;
+	do {
 		if (status != ZOK) {
 			status = zoo_create(session->zk, session->path, val, vallen, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
 		} else {
@@ -277,7 +277,7 @@ PS_GC_FUNC(zookeeper)
 	int i, status;
 	int64_t expiration_time;
 	ZK_SESS_DATA;
-	
+
 	expiration_time = (int64_t) (SG(global_request_time) - PS(gc_maxlifetime)) * 1000;
 	status          = zoo_get_children(session->zk, PHP_ZK_PARENT_NODE, 0, &nodes);
 
@@ -287,7 +287,7 @@ PS_GC_FUNC(zookeeper)
 			int path_len;
 
 			path_len = snprintf(path, 512, "%s/%s", PHP_ZK_PARENT_NODE, nodes.data[i]);
-			
+
 			if (zoo_exists(session->zk, path, 1, &stat) == ZOK) {
 				/* TODO: should lock here? */
 				if (stat.mtime < expiration_time) {
@@ -304,15 +304,15 @@ static void php_zk_sync_completion(int rc, const char *value, const void *data) 
 PS_CLOSE_FUNC(zookeeper)
 {
 	ZK_SESS_DATA;
-	
-	if (session->is_locked) {	
+
+	if (session->is_locked) {
 		(void) zkr_lock_unlock(&(session->lock));
 		efree(session->lock.path);
-	
+
 		zkr_lock_destroy(&(session->lock));
 		session->is_locked = 0;
 	}
-	
+
 	/* TODO: is this needed? */
 	// zoo_async(session->zk, session->path, php_zk_sync_completion, (const void *) session);
 	PS_SET_MOD_DATA(NULL);

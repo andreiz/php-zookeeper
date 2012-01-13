@@ -44,7 +44,7 @@
 
 #define IF_DEBUG(x) if (logLevel==ZOO_LOG_LEVEL_DEBUG) {x;}
 
- 
+
 ZOOAPI int zkr_lock_init(zkr_lock_mutex_t* mutex, zhandle_t* zh,
                       char* path, struct ACL_vector *acl) {
     mutex->zh = zh;
@@ -131,13 +131,13 @@ static void free_String_vector(struct String_vector *v) {
 static int vstrcmp(const void* str1, const void* str2) {
     const char **a = (const char**)str1;
     const char **b = (const char**) str2;
-    return strcmp(strrchr(*a, '-')+1, strrchr(*b, '-')+1); 
-} 
+    return strcmp(strrchr(*a, '-')+1, strrchr(*b, '-')+1);
+}
 
 static void sort_children(struct String_vector *vector) {
     qsort( vector->data, vector->count, sizeof(char*), &vstrcmp);
 }
-        
+
 static char* child_floor(char **sorted_data, int len, char *element) {
     char* ret = NULL;
     int i =0;
@@ -151,7 +151,7 @@ static char* child_floor(char **sorted_data, int len, char *element) {
 
 static void lock_watcher_fn(zhandle_t* zh, int type, int state,
                             const char* path, void *watcherCtx) {
-    //callback that we registered 
+    //callback that we registered
     //should be called
     zkr_lock_lock((zkr_lock_mutex_t*) watcherCtx);
 }
@@ -161,7 +161,7 @@ static void lock_watcher_fn(zhandle_t* zh, int type, int state,
  */
 static char* getName(char* str) {
     char* name = strrchr(str, '/');
-    if (name == NULL) 
+    if (name == NULL)
         return NULL;
     return strdup(name + 1);
 }
@@ -169,7 +169,7 @@ static char* getName(char* str) {
 /**
  * just a method to retry get children
  */
-static int retry_getchildren(zhandle_t *zh, char* path, struct String_vector *vector, 
+static int retry_getchildren(zhandle_t *zh, char* path, struct String_vector *vector,
                              struct timespec *ts, int retry) {
     int ret = ZCONNECTIONLOSS;
     int count = 0;
@@ -185,7 +185,7 @@ static int retry_getchildren(zhandle_t *zh, char* path, struct String_vector *ve
 }
 
 /** see if our node already exists
- * if it does then we dup the name and 
+ * if it does then we dup the name and
  * return it
  */
 static char* lookupnode(struct String_vector *vector, char *prefix) {
@@ -219,10 +219,10 @@ static int retry_zoowexists(zhandle_t *zh, char* path, watcher_fn watcher, void*
     }
     return ret;
 }
-                        
+
 /**
- * the main code that does the zookeeper leader 
- * election. this code creates its own ephemeral 
+ * the main code that does the zookeeper leader
+ * election. this code creates its own ephemeral
  * node on the given path and sees if its the first
  * one on the list and claims to be a leader if and only
  * if its the first one of children in the paretn path
@@ -242,7 +242,7 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
         int ret = 0;
 #if defined(__x86_64__)
         snprintf(prefix, 30, "x-%016lx-", session);
-#else 
+#else
         snprintf(prefix, 30, "x-%016llx-", session);
 #endif
         struct String_vector vectorst;
@@ -261,10 +261,10 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
             char retbuf[len+20];
             snprintf(buf, len, "%s/%s", path, prefix);
             ret = ZCONNECTIONLOSS;
-            ret = zoo_create(zh, buf, NULL, 0,  mutex->acl, 
+            ret = zoo_create(zh, buf, NULL, 0,  mutex->acl,
                              ZOO_EPHEMERAL|ZOO_SEQUENCE, retbuf, (len+20));
-            
-            // do not want to retry the create since 
+
+            // do not want to retry the create since
             // we would end up creating more than one child
             if (ret != ZOK) {
                 LOG_WARN(("could not create zoo node %s", buf));
@@ -272,7 +272,7 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
             }
             mutex->id = getName(retbuf);
         }
-        
+
         if (mutex->id != NULL) {
             ret = ZCONNECTIONLOSS;
             ret = retry_getchildren(zh, path, vector, ts, retry);
@@ -291,11 +291,11 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
                 char last_child[flen];
                 sprintf(last_child, "%s/%s",mutex->path, lessthanme);
                 ret = ZCONNECTIONLOSS;
-                ret = retry_zoowexists(zh, last_child, &lock_watcher_fn, mutex, 
+                ret = retry_zoowexists(zh, last_child, &lock_watcher_fn, mutex,
                                        &stat, ts, retry);
                 // cannot watch my predecessor i am giving up
-                // we need to be able to watch the predecessor 
-                // since if we do not become a leader the others 
+                // we need to be able to watch the predecessor
+                // since if we do not become a leader the others
                 // will keep waiting
                 if (ret != ZOK) {
                     free_String_vector(vector);
@@ -312,7 +312,7 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
                 mutex->isOwner = 0;
             }
             else {
-                // this is the case when we are the owner 
+                // this is the case when we are the owner
                 // of the lock
                 if (strcmp(mutex->id, owner_id) == 0) {
                     LOG_DEBUG(("got the zoo lock owner - %s", mutex->id));
@@ -340,20 +340,20 @@ ZOOAPI int zkr_lock_lock(zkr_lock_mutex_t *mutex) {
     struct timespec ts;
     ts.tv_sec = 0;
     ts.tv_nsec = (.5)*1000000;
-    // retry to see if the path exists and 
+    // retry to see if the path exists and
     // and create if the path does not exist
     while ((exists == ZCONNECTIONLOSS || exists == ZNONODE) && (count <4)) {
         count++;
         // retry the operation
-        if (exists == ZCONNECTIONLOSS) 
+        if (exists == ZCONNECTIONLOSS)
             exists = zoo_exists(zh, path, 0, &stat);
-        else if (exists == ZNONODE) 
+        else if (exists == ZNONODE)
             exists = zoo_create(zh, path, NULL, 0, mutex->acl, 0, NULL, 0);
         nanosleep(&ts, 0);
-          
+
     }
 
-    // need to check if we cannot still access the server 
+    // need to check if we cannot still access the server
     int check_retry = ZCONNECTIONLOSS;
     count = 0;
     while (check_retry != ZOK && count <4) {
@@ -367,13 +367,13 @@ ZOOAPI int zkr_lock_lock(zkr_lock_mutex_t *mutex) {
     return zkr_lock_isowner(mutex);
 }
 
-                    
+
 ZOOAPI char* zkr_lock_getpath(zkr_lock_mutex_t *mutex) {
     return mutex->path;
 }
 
 ZOOAPI int zkr_lock_isowner(zkr_lock_mutex_t *mutex) {
-    return (mutex->id != NULL && mutex->ownerid != NULL 
+    return (mutex->id != NULL && mutex->ownerid != NULL
             && (strcmp(mutex->id, mutex->ownerid) == 0));
 }
 
@@ -382,14 +382,14 @@ ZOOAPI char* zkr_lock_getid(zkr_lock_mutex_t *mutex) {
 }
 
 ZOOAPI int zkr_lock_destroy(zkr_lock_mutex_t* mutex) {
-    if (mutex->id) 
+    if (mutex->id)
         free(mutex->id);
     mutex->path = NULL;
     mutex->acl = NULL;
     mutex->completion = NULL;
     pthread_mutex_destroy(&(mutex->pmutex));
     mutex->isOwner = 0;
-    if (mutex->ownerid) 
+    if (mutex->ownerid)
         free(mutex->ownerid);
     return 0;
 }

@@ -27,13 +27,13 @@
 typedef struct _php_zookeeper_session {
 	/* Connection to zookeeper */
 	zhandle_t *zk;
-	
+
 	/* Lock for the session */
 	zkr_lock_mutex_t lock;
-	
+
 	/* Whether the session is locked */
 	zend_bool is_locked;
-	
+
 	/* Current session path */
 	char path[512];
 } php_zookeeper_session;

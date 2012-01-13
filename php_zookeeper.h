@@ -14,7 +14,7 @@
   +----------------------------------------------------------------------+
 */
 
-/* $ Id: $ */ 
+/* $ Id: $ */
 
 #ifndef PHP_ZOOKEEPER_H
 #define PHP_ZOOKEEPER_H
@@ -66,7 +66,7 @@ extern ps_module ps_mod_zookeeper;
 
 PS_FUNCS(zookeeper);
 
-#endif /* HAVE_ZOOKEEPER_SESSION */ 
+#endif /* HAVE_ZOOKEEPER_SESSION */
 
 #endif /* PHP_ZOOKEEPER_H */
 

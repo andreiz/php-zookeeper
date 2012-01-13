@@ -26,17 +26,17 @@ extern "C" {
 #endif
 /**
  * \brief the call back function called on status change of lock
- * 
- * the call back funtion is called with a rc of 0 if lock is acquired and 
+ *
+ * the call back funtion is called with a rc of 0 if lock is acquired and
  * with an rc of 1 if the lock is released
  * \param rc the value to let us know if its locked or unlocked
- * \param cbdata the callback data that we passed when initializing 
+ * \param cbdata the callback data that we passed when initializing
  * the zookeeper lock.
  */
 
 typedef void (* zkr_lock_completion) (int rc, void* cbdata);
 
-/** 
+/**
  * \file zoo_lock.h
  * \brief zookeeper recipe for locking and leader election.
  * this api implements a writelock on a given path in zookeeper.
@@ -68,7 +68,7 @@ typedef struct zkr_lock_mutex zkr_lock_mutex_t;
  * \param acl the acls to use in zookeeper.
  * \return return 0 if successful.
  */
-ZOOAPI int zkr_lock_init(zkr_lock_mutex_t *mutex, zhandle_t* zh, 
+ZOOAPI int zkr_lock_init(zkr_lock_mutex_t *mutex, zhandle_t* zh,
                       char* path, struct ACL_vector *acl);
 
 /**
@@ -77,18 +77,18 @@ ZOOAPI int zkr_lock_init(zkr_lock_mutex_t *mutex, zhandle_t* zh,
  *
  * this method instantiates the zookeeper mutex lock with
  * a completion function.
- * 
+ *
  * \param mutex the mutex to initialize
  * \param zh the zookeeper handle to use
  * \param path the path in zookeeper to use for locking
  * \param acl the acls to use in zookeeper.
- * \param completion the callback thats called when lock 
+ * \param completion the callback thats called when lock
  * is acquired and released.
  * \param cbdata the callback method is called with data
  * \return return 0 if successful.
  */
 ZOOAPI int zkr_lock_init_cb(zkr_lock_mutex_t *mutex, zhandle_t* zh,
-                      char* path, struct ACL_vector *acl, 
+                      char* path, struct ACL_vector *acl,
                       zkr_lock_completion completion, void* cbdata);
 
 /**
@@ -96,7 +96,7 @@ ZOOAPI int zkr_lock_init_cb(zkr_lock_mutex_t *mutex, zhandle_t* zh,
  *
  * this method tries locking the mutex
  * \param mutex the zookeeper mutex
- * \return return 0 if there is no error. check 
+ * \return return 0 if there is no error. check
  * with zkr_lock_isowner() if you have the lock
  */
 ZOOAPI int zkr_lock_lock(zkr_lock_mutex_t *mutex);
@@ -113,12 +113,12 @@ ZOOAPI int zkr_lock_unlock(zkr_lock_mutex_t *mutex);
 
 /**
  * \brief set the callback function for zookeeper mutex
- * 
+ *
  * this method sets the callback for zookeeper mutex
  * \param mutex the zookeeper mutex
  * \param callback the call back completion function
  */
-ZOOAPI void zkr_lock_setcallback(zkr_lock_mutex_t *mutex, 
+ZOOAPI void zkr_lock_setcallback(zkr_lock_mutex_t *mutex,
                            zkr_lock_completion completion);
 
 /**
@@ -131,7 +131,7 @@ ZOOAPI void zkr_lock_setcallback(zkr_lock_mutex_t *mutex,
 ZOOAPI zkr_lock_completion zkr_lock_getcallback(zkr_lock_mutex_t *mutex);
 
 /**
- * \brief destroy the mutex 
+ * \brief destroy the mutex
  * this method free the mutex
  * \param mutex destroy the zookepeer lock.
  * \return return 0 if destroyed.
@@ -156,7 +156,7 @@ ZOOAPI int zkr_lock_isowner(zkr_lock_mutex_t *mutex);
 
 /**
  * \brief return the id for this mutex
- * this mutex retunrns the id string 
+ * this mutex retunrns the id string
  * \param mutex the mutex
  * \return the id for this mutex
  */

@@ -58,7 +58,7 @@ if test "$PHP_ZOOKEEPER" != "no"; then
 
   	if test "$PHP_ZOOKEEPER_SESSION" != "no"; then
   	  AC_MSG_RESULT([enabled])
-  	
+
       AC_MSG_CHECKING([for session includes])
       session_inc_path=""
 
@@ -87,7 +87,7 @@ if test "$PHP_ZOOKEEPER" != "no"; then
   	  [
   	    PHP_ADD_EXTENSION_DEP(zookeeper, session)
   	  ])
-  	  
+
   	  AC_DEFINE(HAVE_ZOOKEEPER_SESSION,1,[Whether zookeeper session handler is enabled])
   	  SESSION_EXTRA_FILES="php_zookeeper_session.c"
   	else
