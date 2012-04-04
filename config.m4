@@ -27,6 +27,8 @@ if test "$PHP_ZOOKEEPER" != "no"; then
       PHP_LIBZOOKEEPER_DIR="$PHP_LIBZOOKEEPER_DIR"
     elif test -r "$PHP_LIBZOOKEEPER_DIR/include/zookeeper/zookeeper.h"; then
       PHP_LIBZOOKEEPER_DIR="$PHP_LIBZOOKEEPER_DIR"
+    if test -r "$PHP_LIBZOOKEEPER_DIR/include/zookeeper.h"; then
+      PHP_LIBZOOKEEPER_DIR="$PHP_LIBZOOKEEPER_DIR"
     else
       AC_MSG_ERROR([Can't find zookeeper headers under "$PHP_LIBZOOKEEPER_DIR"])
     fi
@@ -52,6 +54,8 @@ if test "$PHP_ZOOKEEPER" != "no"; then
       PHP_LIBZOOKEEPER_INCDIR="$PHP_LIBZOOKEEPER_DIR/include/c-client-src"
     elif test -r "$PHP_LIBZOOKEEPER_DIR/include/zookeeper/zookeeper.h"; then
       PHP_LIBZOOKEEPER_INCDIR="$PHP_LIBZOOKEEPER_DIR/include/zookeeper"
+    elif test -r "$PHP_LIBZOOKEEPER_DIR/include/zookeeper.h"; then
+      PHP_LIBZOOKEEPER_INCDIR="$PHP_LIBZOOKEEPER_DIR/include"
     fi
 
     AC_MSG_CHECKING([whether zookeeper session handler is enabled])
