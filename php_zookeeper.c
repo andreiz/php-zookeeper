@@ -189,8 +189,8 @@ static PHP_METHOD(Zookeeper, create)
 	int path_len, value_len;
 	zval *acl_info = NULL;
 	long flags = 0;
-	char realpath[256];
-	int realpath_max = 256;
+	char *realpath;
+	int realpath_max = 0;
 	struct ACL_vector aclv = { 0, };
 	int status = ZOK;
 	ZK_METHOD_INIT_VARS;
@@ -202,15 +202,23 @@ static PHP_METHOD(Zookeeper, create)
 
 	ZK_METHOD_FETCH_OBJECT;
 
+	realpath_max = path_len + 1;
+	if (flags & ZOO_SEQUENCE) {
+		// allocate extra space for sequence numbers
+		realpath_max += 11;
+	}
+	realpath = emalloc(realpath_max);
+
 	php_parse_acl_list(acl_info, &aclv);
 	status = zoo_create(i_obj->zk, path, value, value_len, (acl_info ? &aclv : 0), flags,
 						realpath, realpath_max);
 	if (status != ZOK) {
+		efree(realpath);
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
 		return;
 	}
 
-	RETURN_STRING(realpath, 1);
+	RETURN_STRING(realpath, 0);
 }
 /* }}} */
 
