@@ -330,9 +330,10 @@ static PHP_METHOD(Zookeeper, get)
 		length = max_size;
 	}
 
-	buffer = emalloc (length);
+	buffer = emalloc (length+1);
 	status = zoo_wget(i_obj->zk, path, (fci.size != 0) ? php_zk_watcher_marshal : NULL,
 					  cb_data, buffer, &length, &stat);
+	buffer[length] = 0;
 
 	if (status != ZOK) {
 		efree (buffer);
@@ -723,7 +724,11 @@ zend_object_value php_zk_new(zend_class_entry *ce TSRMLS_DC)
 
     i_obj = ecalloc(1, sizeof(*i_obj));
 	zend_object_std_init( &i_obj->zo, ce TSRMLS_CC );
+#if PHP_VERSION_ID >= 50400
+	object_properties_init( (zend_object *) i_obj, ce);
+#else
     zend_hash_copy(i_obj->zo.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
+#endif
 
     retval.handle = zend_objects_store_put(i_obj, (zend_objects_store_dtor_t)zend_objects_destroy_object, (zend_objects_free_object_storage_t)php_zk_free_storage, NULL TSRMLS_CC);
     retval.handlers = zend_get_std_object_handlers();
