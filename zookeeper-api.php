@@ -99,8 +99,6 @@ class Zookeeper {
 
 	public function setLogFile( $file ) {} // TODO: might be able to set a stream like php://stderr or something
 
-	public function close( ) {}
-
 	public function getResultMessage( ) {}
 
 
