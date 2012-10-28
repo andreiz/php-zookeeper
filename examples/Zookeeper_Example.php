@@ -124,9 +124,9 @@ class Zookeeper_Example
 	 * @return array the subpaths within the given node
 	 */
 	public function getChildren($path) {
-		if (!preg_match('@/$@', $path)) {
-			// if the path does not end in '/', add a trailing slash
-			$path .= '/';
+		if (strlen($path) > 1 && preg_match('@/$@', $path)) {
+			// remove trailing /
+			$path = substr($path, 0, -1);
 		}
 		return $this->zookeeper->getChildren($path);
 	}
@@ -139,3 +139,7 @@ var_dump($zk->getChildren('/'));
 var_dump($zk->set('/test123', 'abc'));
 var_dump($zk->get('/test123'));
 var_dump($zk->getChildren('/'));
+
+var_dump($zk->set('/foo/001', 'bar1'));
+var_dump($zk->set('/foo/002', 'bar2'));
+var_dump($zk->getChildren('/foo'));
