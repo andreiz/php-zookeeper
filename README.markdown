@@ -10,3 +10,4 @@ providing group services.
 Resources
 ---------
  * [zookeeper](http://hadoop.apache.org/zookeeper/)
+ * [recipes](https://github.com/Gutza/php-zookeeper-recipes)
