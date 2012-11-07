@@ -22,7 +22,6 @@ class Zookeeper {
 	const CONNECTING_STATE      = 1;
 	const ASSOCIATING_STATE     = 2;
 	const CONNECTED_STATE       = 3;
-	const NOTCONNECTED_STATE    = 999;
 
 	const CREATED_EVENT         = 1;
 	const DELETED_EVENT         = 2;
