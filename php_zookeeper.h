@@ -70,6 +70,9 @@ PS_FUNCS(zookeeper);
 
 #endif /* PHP_ZOOKEEPER_H */
 
+#ifndef ZOO_NOTCONNECTED_STATE
+#define ZOO_NOTCONNECTED_STATE 999
+#endif
 
 /*
  * Local variables:
