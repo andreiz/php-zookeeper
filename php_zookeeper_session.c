@@ -63,7 +63,7 @@ static php_zookeeper_session *php_zookeeper_session_init(char *save_path TSRMLS_
 		if (status != ZOK) {
 			zookeeper_close(session->zk);
 			efree(session);
-			php_error_docref(NULL TSRMLS_CC, E_ERROR, "Failed to create parent node for sessions");
+			zend_throw_exception(zookeeper_ce_ZookeeperException, "Failed to create parent node for sessions", 0 TSRMLS_CC);
 		}
 	}
 	return session;
@@ -96,7 +96,7 @@ static php_zookeeper_session *php_zookeeper_session_get(char *save_path TSRMLS_D
 	le.ptr  = session;
 
 	if (zend_hash_update(&EG(persistent_list), (char *)plist_key, plist_key_len, (void *)&le, sizeof(le), NULL) == FAILURE) {
-		php_error_docref(NULL TSRMLS_CC, E_ERROR, "Could not register persistent entry for the zk handle");
+		zend_throw_exception(zookeeper_ce_ZookeeperException, "Could not register persistent entry for the zk handle", 0 TSRMLS_CC);
 	}
 
 	efree(plist_key);
@@ -175,7 +175,7 @@ PS_READ_FUNC(zookeeper)
 
 	if (ZK_G(session_lock)) {
 		if (!php_zookeeper_sess_lock(session, key TSRMLS_CC)) {
-			php_error_docref(NULL TSRMLS_CC, E_ERROR, "Failed to create session mutex");
+			zend_throw_exception(zookeeper_ce_ZookeeperException, "Failed to create session mutex", 0 TSRMLS_CC);
 			return FAILURE;
 		}
 	}

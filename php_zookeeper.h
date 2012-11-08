@@ -68,11 +68,14 @@ PS_FUNCS(zookeeper);
 
 #endif /* HAVE_ZOOKEEPER_SESSION */
 
-#endif /* PHP_ZOOKEEPER_H */
-
 #ifndef ZOO_NOTCONNECTED_STATE
 #define ZOO_NOTCONNECTED_STATE 999
 #endif
+
+#include <Zend/zend_exceptions.h>
+#define zookeeper_ce_Exception    zend_exception_get_default(TSRMLS_C)
+
+#endif /* PHP_ZOOKEEPER_H */
 
 /*
  * Local variables:

@@ -39,6 +39,8 @@ typedef struct _php_zookeeper_session {
 } php_zookeeper_session;
 /* }}} */
 
+extern zend_class_entry *zookeeper_ce_ZookeeperException;
+
 #endif /* _PHP_ZOOKEEPER_SESSION_H_ */
 
 #endif /* HAVE_ZOOKEEPER_SESSION */

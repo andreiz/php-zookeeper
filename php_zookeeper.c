@@ -51,7 +51,7 @@
 #define ZK_METHOD_FETCH_OBJECT                                                 \
     i_obj = (php_zk_t *) zend_object_store_get_object( object TSRMLS_CC );   \
 	if (!i_obj->zk) {	\
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Zookeeper connect was not called");	\
+		zend_throw_exception(zookeeper_ce_ZookeeperException, "Zookeeper connect was not called", 0 TSRMLS_CC); \
 		return;	\
 	} \
 
@@ -72,6 +72,7 @@ typedef struct {
 } php_zk_t;
 
 static zend_class_entry *zookeeper_ce = NULL;
+zend_class_entry *zookeeper_ce_ZookeeperException;
 
 #ifdef HAVE_ZOOKEEPER_SESSION
 static int le_zookeeper_connection;
@@ -115,8 +116,8 @@ static void php_zookeeper_connect_impl(INTERNAL_FUNCTION_PARAMETERS, char *host,
 	php_cb_data_t *cb_data = NULL;
 
 	if (recv_timeout <= 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "recv_timeout parameter has to be greater than 0");
 		ZVAL_NULL(object);
+		zend_throw_exception(zookeeper_ce_ZookeeperException, "recv_timeout parameter has to be greater than 0", 0 TSRMLS_CC);
 		return;
 	}
 
@@ -129,7 +130,7 @@ static void php_zookeeper_connect_impl(INTERNAL_FUNCTION_PARAMETERS, char *host,
 						recv_timeout, 0, cb_data, 0);
 
 	if (zk == NULL) {
-		php_error_docref(NULL TSRMLS_CC, E_ERROR, "could not init zookeeper instance");
+		zend_throw_exception(zookeeper_ce_ZookeeperException, "could not init zookeeper instance", 0 TSRMLS_CC);
 		/* not reached */
 	}
 
@@ -214,7 +215,7 @@ static PHP_METHOD(Zookeeper, create)
 						realpath, realpath_max);
 	if (status != ZOK) {
 		efree(realpath);
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		zend_throw_exception(zookeeper_ce_ZookeeperException, (char*)zerror(status), status);
 		return;
 	}
 
@@ -242,7 +243,8 @@ static PHP_METHOD(Zookeeper, delete)
 
 	status = zoo_delete(i_obj->zk, path, version);
 	if (status != ZOK) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		zend_throw_exception(zookeeper_ce_ZookeeperException, (char*)zerror(status), status);
+
 		return;
 	}
 
@@ -278,7 +280,8 @@ static PHP_METHOD(Zookeeper, getChildren)
 							   cb_data, &strings);
 	if (status != ZOK) {
 		php_cb_data_destroy(&cb_data);
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		zend_throw_exception(zookeeper_ce_ZookeeperException, (char*)zerror(status), status);
+
 		return;
 	}
 
@@ -322,7 +325,8 @@ static PHP_METHOD(Zookeeper, get)
 
 		if (status != ZOK) {
 			php_cb_data_destroy(&cb_data);
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+			zend_throw_exception(zookeeper_ce_ZookeeperException, (char*)zerror(status), status);
+
 			return;
 		}
 		length = stat.dataLength;
@@ -338,12 +342,8 @@ static PHP_METHOD(Zookeeper, get)
 	if (status != ZOK) {
 		efree (buffer);
 		php_cb_data_destroy(&cb_data);
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		zend_throw_exception(zookeeper_ce_ZookeeperException, (char*)zerror(status), status);
 
-		/* Indicate data marshalling failure with boolean false so that user can retry */
-		if (status == ZMARSHALLINGERROR) {
-			RETURN_FALSE;
-		}
 		return;
 	}
 
@@ -382,7 +382,8 @@ static PHP_METHOD(Zookeeper, exists)
 						 cb_data, &stat);
 	if (status != ZOK && status != ZNONODE) {
 		php_cb_data_destroy(&cb_data);
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		zend_throw_exception(zookeeper_ce_ZookeeperException, (char*)zerror(status), status);
+
 		return;
 	}
 
@@ -419,7 +420,8 @@ static PHP_METHOD(Zookeeper, set)
 	}
 	status = zoo_set2(i_obj->zk, path, value, value_len, version, stat_ptr);
 	if (status != ZOK) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		zend_throw_exception(zookeeper_ce_ZookeeperException, (char*)zerror(status), status);
+
 		return;
 	}
 
@@ -472,7 +474,7 @@ static PHP_METHOD(Zookeeper, getAcl)
 
 	status = zoo_get_acl(i_obj->zk, path, &aclv, &stat);
 	if (status != ZOK) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		zend_throw_exception(zookeeper_ce_ZookeeperException, (char*)zerror(status), status);
 		return;
 	}
 
@@ -509,7 +511,7 @@ static PHP_METHOD(Zookeeper, setAcl)
 	status = zoo_set_acl(i_obj->zk, path, version, &aclv);
 	php_aclv_destroy(&aclv);
 	if (status != ZOK) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		zend_throw_exception(zookeeper_ce_ZookeeperException, (char*)zerror(status), status);
 		return;
 	}
 	RETURN_TRUE;
@@ -622,7 +624,7 @@ static PHP_METHOD(Zookeeper, addAuth)
 	status = zoo_add_auth(i_obj->zk, scheme, cert, cert_len,
 						  (fci.size != 0) ? php_zk_completion_marshal : NULL, cb_data);
 	if (status != ZOK) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		zend_throw_exception(zookeeper_ce_ZookeeperException, (char*)zerror(status), status);
 		return;
 	}
 
@@ -786,7 +788,7 @@ static void php_zk_watcher_marshal(zhandle_t *zk, int type, int state, const cha
 	if (zend_call_function(&cb_data->fci, &cb_data->fcc TSRMLS_CC) == SUCCESS) {
 		zval_ptr_dtor(&retval);
 	} else {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "could not invoke watcher callback");
+		zend_throw_exception(zookeeper_ce_ZookeeperException, "could not invoke watcher callback", 0 TSRMLS_CC);
 	}
 
 	zval_ptr_dtor(&z_type);
@@ -820,7 +822,7 @@ static void php_zk_completion_marshal(int rc, const void *context)
 	if (zend_call_function(&cb_data->fci, &cb_data->fcc TSRMLS_CC) == SUCCESS) {
 		zval_ptr_dtor(&retval);
 	} else {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "could not invoke completion callback");
+		zend_throw_exception(zookeeper_ce_ZookeeperException, "could not invoke completion callback", 0 TSRMLS_CC);
 	}
 
 	zval_ptr_dtor(&z_rc);
@@ -1067,6 +1069,10 @@ static zend_function_entry zookeeper_class_methods[] = {
 #undef ZK_ME
 /* }}} */
 
+const zend_function_entry zookeeper_exception_methods[] = {
+    {NULL, NULL, NULL}
+};
+
 /* {{{ zookeeper_module_entry
  */
 
@@ -1208,6 +1214,12 @@ PHP_MINIT_FUNCTION(zookeeper)
 #ifdef HAVE_ZOOKEEPER_SESSION
 	php_session_register_module(ps_zookeeper_ptr);
 #endif
+
+	/*exceptions*/
+	INIT_CLASS_ENTRY(ce, "ZookeeperException", zookeeper_exception_methods);
+	zookeeper_ce_ZookeeperException = zend_register_internal_class_ex(&ce, zookeeper_ce_Exception, NULL TSRMLS_CC);
+
+
 	return SUCCESS;
 }
 /* }}} */
