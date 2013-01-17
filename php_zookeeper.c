@@ -1111,7 +1111,12 @@ static void php_zk_register_constants(INIT_FUNC_ARGS)
 	ZK_CLASS_CONST_LONG(CONNECTING_STATE);
 	ZK_CLASS_CONST_LONG(ASSOCIATING_STATE);
 	ZK_CLASS_CONST_LONG(CONNECTED_STATE);
-	ZK_CLASS_CONST_LONG(NOTCONNECTED_STATE);
+
+	/*
+	 * zookeeper does not expose the symbol for the NOTCONNECTED state in the headers, so
+	 * we have to cheat
+	 */
+	zend_declare_class_constant_long(php_zk_get_ce(), ZEND_STRS("NOTCONNECTED_STATE")-1, 999 TSRMLS_CC);
 
 	ZK_CLASS_CONST_LONG(CREATED_EVENT);
 	ZK_CLASS_CONST_LONG(DELETED_EVENT);
