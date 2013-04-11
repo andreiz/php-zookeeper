@@ -185,7 +185,7 @@ static PHP_METHOD(Zookeeper, __construct)
    */
 static PHP_METHOD(Zookeeper, create)
 {
-	char *path, *value;
+	char *path, *value = NULL;
 	int path_len, value_len;
 	zval *acl_info = NULL;
 	long flags = 0;
@@ -195,7 +195,7 @@ static PHP_METHOD(Zookeeper, create)
 	int status = ZOK;
 	ZK_METHOD_INIT_VARS;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssa!|l", &path, &path_len,
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!a!|l", &path, &path_len,
 							  &value, &value_len, &acl_info, &flags) == FAILURE) {
 		return;
 	}
@@ -208,6 +208,10 @@ static PHP_METHOD(Zookeeper, create)
 		realpath_max += 11;
 	}
 	realpath = emalloc(realpath_max);
+
+    if (value == NULL) {
+        value_len = -1;
+    }
 
 	php_parse_acl_list(acl_info, &aclv);
 	status = zoo_create(i_obj->zk, path, value, value_len, (acl_info ? &aclv : 0), flags,
@@ -335,6 +339,11 @@ static PHP_METHOD(Zookeeper, get)
 					  cb_data, buffer, &length, &stat);
 	buffer[length] = 0;
 
+    /* Length will be returned as -1 if the znode carries a NULL */
+    if (length == -1) {
+        RETURN_NULL();
+    }
+
 	if (status != ZOK) {
 		efree (buffer);
 		php_cb_data_destroy(&cb_data);
@@ -399,7 +408,7 @@ static PHP_METHOD(Zookeeper, exists)
    */
 static PHP_METHOD(Zookeeper, set)
 {
-	char *path, *value;
+	char *path, *value = NULL;
 	int path_len, value_len;
 	long version = -1;
 	zval *stat_info = NULL;
@@ -407,7 +416,7 @@ static PHP_METHOD(Zookeeper, set)
 	int status = ZOK;
 	ZK_METHOD_INIT_VARS;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|lz", &path, &path_len,
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!|lz", &path, &path_len,
 							  &value, &value_len, &version, &stat_info) == FAILURE) {
 		return;
 	}
@@ -417,6 +426,9 @@ static PHP_METHOD(Zookeeper, set)
 	if (stat_info) {
 		stat_ptr = &stat;
 	}
+    if (value == NULL) {
+        value_len = -1;
+    }
 	status = zoo_set2(i_obj->zk, path, value, value_len, version, stat_ptr);
 	if (status != ZOK) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
