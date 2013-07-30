@@ -1,5 +1,18 @@
 zookeeper extension changelog
 
+Version 0.2.2
+-------------
+	* PHP 5.4 compatibility
+	* Sample PHP class for using zookeeper
+	* Fix NOTCONNECTED_STATE issue
+	* Various other fixes
+
+Version 0.2.1
+-------------
+
+Version 0.2.0
+-------------
+
 Version 0.1.0
 -------------
 	* Initial release
