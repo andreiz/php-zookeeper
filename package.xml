@@ -15,10 +15,10 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <email>andrei@php.net</email>
   <active>yes</active>
  </lead>
- <date>2012-01-13</date>
+ <date>2013-07-30</date>
  <version>
-  <release>0.2.1</release>
-  <api>0.2.0</api>
+  <release>0.2.2</release>
+  <api>0.2.2</api>
  </version>
  <stability>
   <release>beta</release>
@@ -26,10 +26,16 @@ http://pear.php.net/dtd/package-2.0.xsd">
  </stability>
  <license uri="http://www.php.net/license">PHP</license>
  <notes>
-- Package up missed source files
+- PHP 5.4 compatibility
+- Sample PHP class for using zookeeper
+- Fix NOTCONNECTED_STATE issue
+- Various other fixes
  </notes>
  <contents>
   <dir name="/">
+   <dir name="examples">
+    <file role='php' name='Zookeeper_Example.php'/>
+   </dir>
    <file role='doc' name='README.markdown'/>
    <file role='doc' name='CREDITS'/>
    <file role='doc' name='LICENSE'/>
@@ -60,6 +66,18 @@ http://pear.php.net/dtd/package-2.0.xsd">
  <providesextension>zookeeper</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability><release>beta</release><api>beta</api></stability>
+   <version><release>0.2.2</release><api>0.2.2</api></version>
+   <date>2013-07-30</date>
+   <notes>
+- PHP 5.4 compatibility
+- Sample PHP class for using zookeeper
+- Fix NOTCONNECTED_STATE issue
+- Various other fixes
+   </notes>
+  </release>
+
   <release>
    <stability><release>beta</release><api>beta</api></stability>
    <version><release>0.2.1</release><api>0.2.0</api></version>
