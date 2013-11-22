@@ -68,6 +68,10 @@ PS_FUNCS(zookeeper);
 
 #endif /* HAVE_ZOOKEEPER_SESSION */
 
+#ifndef PHPZK_CONNECTION_FAILURE
+#define PHPZK_CONNECTION_FAILURE 5999
+#endif
+
 #endif /* PHP_ZOOKEEPER_H */
 
 

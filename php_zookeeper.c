@@ -78,6 +78,8 @@ zend_class_entry *zk_base_exception;
 zend_class_entry *zk_optimeout_exception;
 zend_class_entry *zk_connection_exception;
 zend_class_entry *zk_marshalling_exception;
+zend_class_entry *zk_auth_exception;
+zend_class_entry *zk_session_exception;
 
 #ifdef HAVE_ZOOKEEPER_SESSION
 static int le_zookeeper_connection;
@@ -122,8 +124,13 @@ zend_class_entry * php_zk_get_exception_with_message(zend_class_entry *ce, char 
 static void php_zk_throw_exception(int zk_status)
 {
 	zend_class_entry *ce;
+	char *message = NULL;
 
 	switch(zk_status) {
+		case PHPZK_CONNECTION_FAILURE:
+			ce = zk_connection_exception;
+			message = "Failed to connect to Zookeeper";
+			break;
 		case ZCONNECTIONLOSS:
 			ce = zk_connection_exception;
 			break;
@@ -132,12 +139,25 @@ static void php_zk_throw_exception(int zk_status)
 			break;
 		case ZMARSHALLINGERROR:
 			ce = zk_marshalling_exception;
+			break;
+		case ZNOAUTH:
+		case ZAUTHFAILED:
+			ce = zk_auth_exception;
+			break;
+		case ZSESSIONEXPIRED:
+		case ZSESSIONMOVED:
+			ce = zk_session_exception;
+			break;
 		default:
 			ce = zk_base_exception;
 			break;
 	}
 
-	zend_throw_exception(php_zk_get_exception_with_message(ce, (char*)zerror(zk_status)), NULL, 0 TSRMLS_CC);
+	if (!message) {
+		message = (char *)zerror(zk_status);
+	}
+
+	zend_throw_exception(php_zk_get_exception_with_message(ce, message), NULL, 0 TSRMLS_CC);
 	return;
 }
 
@@ -150,6 +170,7 @@ static void php_zookeeper_connect_impl(INTERNAL_FUNCTION_PARAMETERS, char *host,
 	int state;
 
 	if (recv_timeout <= 0) {
+		php_zk_throw_exception(ZBADARGUMENTS);
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "recv_timeout parameter has to be greater than 0");
 		ZVAL_NULL(object);
 		return;
@@ -164,7 +185,7 @@ static void php_zookeeper_connect_impl(INTERNAL_FUNCTION_PARAMETERS, char *host,
 						recv_timeout, 0, cb_data, 0);
 
 	if (!zk) {
-		php_zk_throw_exception(ZCONNECTIONLOSS);
+		php_zk_throw_exception(PHPZK_CONNECTION_FAILURE);
 	}
 
 	i_obj->zk = zk;
@@ -364,7 +385,7 @@ static PHP_METHOD(Zookeeper, get)
 		if (max_size <= 0) {
 			status = zoo_exists(i_obj->zk, path, 1, &stat);
 
-			if (status == ZOPERATIONTIMEOUT) {
+			if (status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) {
 				php_error_docref(NULL TSRMLS_CC, E_WARNING,
 								 "error: %s (retrying in %ds)",
 								 zerror(status), delay);
@@ -373,7 +394,7 @@ static PHP_METHOD(Zookeeper, get)
 				continue;
 			} else if (status != ZOK) {
 				php_cb_data_destroy(&cb_data);
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+				php_zk_throw_exception(status);
 				return;
 			}
 
@@ -1198,12 +1219,7 @@ static void php_zk_register_constants(INIT_FUNC_ARGS)
 	ZK_CLASS_CONST_LONG(CONNECTING_STATE);
 	ZK_CLASS_CONST_LONG(ASSOCIATING_STATE);
 	ZK_CLASS_CONST_LONG(CONNECTED_STATE);
-
-	/*
-	 * zookeeper does not expose the symbol for the NOTCONNECTED state in the headers, so
-	 * we have to cheat
-	 */
-	//zend_declare_class_constant_long(php_zk_get_ce(), ZEND_STRS("NOTCONNECTED_STATE")-1, 999 TSRMLS_CC);
+	ZK_CLASS_CONST_LONG(NOTCONNECTED_STATE);
 
 	ZK_CLASS_CONST_LONG(CREATED_EVENT);
 	ZK_CLASS_CONST_LONG(DELETED_EVENT);
@@ -1226,7 +1242,6 @@ static void php_zk_register_constants(INIT_FUNC_ARGS)
 	ZK_CLASS_CONST_LONG2(OPERATIONTIMEOUT);
 	ZK_CLASS_CONST_LONG2(BADARGUMENTS);
 	ZK_CLASS_CONST_LONG2(INVALIDSTATE);
-	ZK_CLASS_CONST_LONG(NOTCONNECTED_STATE);
 
 	ZK_CLASS_CONST_LONG2(OK);
 	ZK_CLASS_CONST_LONG2(APIERROR);
@@ -1275,6 +1290,12 @@ static void php_zk_register_exceptions()
 
 	INIT_CLASS_ENTRY(ce, "ZookeeperMarshallingException", NULL);
 	zk_marshalling_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
+
+	INIT_CLASS_ENTRY(ce, "ZookeeperAuthenticationException", NULL);
+	zk_auth_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
+
+	INIT_CLASS_ENTRY(ce, "ZookeeperSessionException", NULL);
+	zk_session_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
 }
 
 int php_zookeeper_get_connection_le()
