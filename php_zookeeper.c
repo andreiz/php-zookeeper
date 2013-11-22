@@ -73,9 +73,11 @@ typedef struct {
 } php_zk_t;
 
 static zend_class_entry *zookeeper_ce = NULL;
+
 zend_class_entry *zk_base_exception;
 zend_class_entry *zk_optimeout_exception;
-zend_class_entry *zk_conntimeout_exception;
+zend_class_entry *zk_connection_exception;
+zend_class_entry *zk_marshalling_exception;
 
 #ifdef HAVE_ZOOKEEPER_SESSION
 static int le_zookeeper_connection;
@@ -111,12 +113,41 @@ static void php_aclv_to_array(const struct ACL_vector *aclv, zval *array);
   Method implementations
 ****************************************/
 
+zend_class_entry * php_zk_get_exception_with_message(zend_class_entry *ce, char *message)
+{
+	zend_declare_property_string(ce, "message", strlen("message"), message, ZEND_ACC_PUBLIC TSRMLS_CC);
+	return ce;
+}
+
+static void php_zk_throw_exception(int zk_status)
+{
+	zend_class_entry *ce;
+
+	switch(zk_status) {
+		case ZCONNECTIONLOSS:
+			ce = zk_connection_exception;
+			break;
+		case ZOPERATIONTIMEOUT:
+			ce = zk_optimeout_exception;
+			break;
+		case ZMARSHALLINGERROR:
+			ce = zk_marshalling_exception;
+		default:
+			ce = zk_base_exception;
+			break;
+	}
+
+	zend_throw_exception(php_zk_get_exception_with_message(ce, (char*)zerror(zk_status)), NULL, 0 TSRMLS_CC);
+	return;
+}
+
 static void php_zookeeper_connect_impl(INTERNAL_FUNCTION_PARAMETERS, char *host, zend_fcall_info *fci, zend_fcall_info_cache *fcc, long recv_timeout)
 {
 	zval *object = getThis();
 	php_zk_t *i_obj;
 	zhandle_t *zk = NULL;
 	php_cb_data_t *cb_data = NULL;
+	int state;
 
 	if (recv_timeout <= 0) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "recv_timeout parameter has to be greater than 0");
@@ -132,9 +163,8 @@ static void php_zookeeper_connect_impl(INTERNAL_FUNCTION_PARAMETERS, char *host,
 	zk = zookeeper_init(host, (fci->size != 0) ? php_zk_watcher_marshal : NULL,
 						recv_timeout, 0, cb_data, 0);
 
-	if (zk == NULL) {
-		php_error_docref(NULL TSRMLS_CC, E_ERROR, "could not init zookeeper instance");
-		/* not reached */
+	if (!zk) {
+		php_zk_throw_exception(ZCONNECTIONLOSS);
 	}
 
 	i_obj->zk = zk;
@@ -180,7 +210,6 @@ static PHP_METHOD(Zookeeper, __construct)
 	{
 		php_zookeeper_connect_impl(INTERNAL_FUNCTION_PARAM_PASSTHRU, host, &fci, &fcc, recv_timeout);
 	}
-
 }
 /* }}} */
 
@@ -222,7 +251,7 @@ static PHP_METHOD(Zookeeper, create)
 						realpath, realpath_max);
 	if (status != ZOK) {
 		efree(realpath);
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		php_zk_throw_exception(status);
 		return;
 	}
 
@@ -250,7 +279,7 @@ static PHP_METHOD(Zookeeper, delete)
 
 	status = zoo_delete(i_obj->zk, path, version);
 	if (status != ZOK) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		php_zk_throw_exception(status);
 		return;
 	}
 
@@ -286,7 +315,7 @@ static PHP_METHOD(Zookeeper, getChildren)
 							   cb_data, &strings);
 	if (status != ZOK) {
 		php_cb_data_destroy(&cb_data);
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		php_zk_throw_exception(status);
 		return;
 	}
 
@@ -316,6 +345,7 @@ static PHP_METHOD(Zookeeper, get)
 	long delay = 1;
 	long backoff = 2;
 	int tries;
+	char *message;
 
 	ZK_METHOD_INIT_VARS;
 
@@ -365,18 +395,19 @@ static PHP_METHOD(Zookeeper, get)
 			delay = (delay+backoff);
 			continue;
 		} else if (status == ZMARSHALLINGERROR) {
-			RETURN_FALSE;
+			zend_throw_exception(zk_marshalling_exception, (char *)zerror(status), 0 TSRMLS_CC);
+			return;
 		} else if (status != ZOK) {
 			efree (buffer);
 			php_cb_data_destroy(&cb_data);
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+			php_zk_throw_exception(status);
 			return;
 		}
 	}
 
 	if (status != ZOK) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: timed out after %d tries", tries );
-		RETURN_FALSE;
+		php_zk_throw_exception(status);
+		return;
 	}
 
 	/* Length will be returned as -1 if the znode carries a NULL */
@@ -433,7 +464,7 @@ static PHP_METHOD(Zookeeper, exists)
 			continue;
 		} else if (status != ZOK && status != ZNONODE) {
 			php_cb_data_destroy(&cb_data);
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+			php_zk_throw_exception(status);
 			return;
 		}
 	}
@@ -442,7 +473,8 @@ static PHP_METHOD(Zookeeper, exists)
 		php_stat_to_array(&stat, return_value);
 		return;
 	} else {
-		RETURN_FALSE;
+		php_zk_throw_exception(status);
+		return;
 	}
 }
 /* }}} */
@@ -474,7 +506,7 @@ static PHP_METHOD(Zookeeper, set)
 	}
 	status = zoo_set2(i_obj->zk, path, value, value_len, version, stat_ptr);
 	if (status != ZOK) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		php_zk_throw_exception(status);
 		return;
 	}
 
@@ -527,7 +559,7 @@ static PHP_METHOD(Zookeeper, getAcl)
 
 	status = zoo_get_acl(i_obj->zk, path, &aclv, &stat);
 	if (status != ZOK) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		php_zk_throw_exception(status);
 		return;
 	}
 
@@ -564,7 +596,7 @@ static PHP_METHOD(Zookeeper, setAcl)
 	status = zoo_set_acl(i_obj->zk, path, version, &aclv);
 	php_aclv_destroy(&aclv);
 	if (status != ZOK) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		php_zk_throw_exception(status);
 		return;
 	}
 	RETURN_TRUE;
@@ -677,7 +709,7 @@ static PHP_METHOD(Zookeeper, addAuth)
 	status = zoo_add_auth(i_obj->zk, scheme, cert, cert_len,
 						  (fci.size != 0) ? php_zk_completion_marshal : NULL, cb_data);
 	if (status != ZOK) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+		php_zk_throw_exception(status);
 		return;
 	}
 
@@ -1171,7 +1203,7 @@ static void php_zk_register_constants(INIT_FUNC_ARGS)
 	 * zookeeper does not expose the symbol for the NOTCONNECTED state in the headers, so
 	 * we have to cheat
 	 */
-	zend_declare_class_constant_long(php_zk_get_ce(), ZEND_STRS("NOTCONNECTED_STATE")-1, 999 TSRMLS_CC);
+	//zend_declare_class_constant_long(php_zk_get_ce(), ZEND_STRS("NOTCONNECTED_STATE")-1, 999 TSRMLS_CC);
 
 	ZK_CLASS_CONST_LONG(CREATED_EVENT);
 	ZK_CLASS_CONST_LONG(DELETED_EVENT);
@@ -1194,6 +1226,7 @@ static void php_zk_register_constants(INIT_FUNC_ARGS)
 	ZK_CLASS_CONST_LONG2(OPERATIONTIMEOUT);
 	ZK_CLASS_CONST_LONG2(BADARGUMENTS);
 	ZK_CLASS_CONST_LONG2(INVALIDSTATE);
+	ZK_CLASS_CONST_LONG(NOTCONNECTED_STATE);
 
 	ZK_CLASS_CONST_LONG2(OK);
 	ZK_CLASS_CONST_LONG2(APIERROR);
@@ -1237,8 +1270,11 @@ static void php_zk_register_exceptions()
 	INIT_CLASS_ENTRY(ce, "ZookeeperOperationTimeoutException", NULL);
 	zk_optimeout_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
 
-	INIT_CLASS_ENTRY(ce, "ZookeeperConnectionTimeoutException", NULL);
-	zk_conntimeout_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
+	INIT_CLASS_ENTRY(ce, "ZookeeperConnectionException", NULL);
+	zk_connection_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
+
+	INIT_CLASS_ENTRY(ce, "ZookeeperMarshallingException", NULL);
+	zk_marshalling_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
 }
 
 int php_zookeeper_get_connection_le()
