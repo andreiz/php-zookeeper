@@ -308,10 +308,15 @@ static PHP_METHOD(Zookeeper, get)
 	struct Stat stat;
 	int status = ZOK;
 	int length;
+	long retries = 3;
+	long delay = 1;
+	long backoff = 2;
+	int tries;
+
 	ZK_METHOD_INIT_VARS;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!zl", &path, &path_len, &fci,
-							  &fcc, &stat_info, &max_size) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!zllll", &path, &path_len, &fci,
+							  &fcc, &stat_info, &max_size, &retries, &delay, &backoff) == FAILURE) {
 		return;
 	}
 
@@ -321,39 +326,58 @@ static PHP_METHOD(Zookeeper, get)
 		cb_data = php_cb_data_new(&fci, &fcc, 1 TSRMLS_CC);
 	}
 
-	if (max_size <= 0) {
-		status = zoo_exists(i_obj->zk, path, 1, &stat);
+	for (tries=0; tries < retries; tries++) {
+		if (max_size <= 0) {
+			status = zoo_exists(i_obj->zk, path, 1, &stat);
 
-		if (status != ZOK) {
+			if (status == ZOPERATIONTIMEOUT) {
+				php_error_docref(NULL TSRMLS_CC, E_WARNING,
+								 "error: %s (retrying in %ds)",
+								 zerror(status), delay);
+				sleep(delay);
+				delay = (delay+backoff);
+				continue;
+			} else if (status != ZOK) {
+				php_cb_data_destroy(&cb_data);
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
+				return;
+			}
+
+			length = stat.dataLength;
+		} else {
+			length = max_size;
+		}
+
+		buffer = emalloc (length+1);
+		status = zoo_wget(i_obj->zk, path, (fci.size != 0) ? php_zk_watcher_marshal : NULL,
+						  cb_data, buffer, &length, &stat);
+		buffer[length] = 0;
+
+		if (status == ZOPERATIONTIMEOUT) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING,
+							 "error: %s (retrying in %ds)",
+							 zerror(status), delay);
+			sleep(delay);
+			delay = (delay+backoff);
+			continue;
+		} else if (status == ZMARSHALLINGERROR) {
+			RETURN_FALSE;
+		} else if (status != ZOK) {
+			efree (buffer);
 			php_cb_data_destroy(&cb_data);
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
 			return;
 		}
-		length = stat.dataLength;
-	} else {
-		length = max_size;
 	}
 
-	buffer = emalloc (length+1);
-	status = zoo_wget(i_obj->zk, path, (fci.size != 0) ? php_zk_watcher_marshal : NULL,
-					  cb_data, buffer, &length, &stat);
-	buffer[length] = 0;
+	if (status != ZOK) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: timed out after %d tries", tries );
+		RETURN_FALSE;
+	}
 
 	/* Length will be returned as -1 if the znode carries a NULL */
 	if (length == -1) {
 		RETURN_NULL();
-	}
-
-	if (status != ZOK) {
-		efree (buffer);
-		php_cb_data_destroy(&cb_data);
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "error: %s", zerror(status));
-
-		/* Indicate data marshalling failure with boolean false so that user can retry */
-		if (status == ZMARSHALLINGERROR) {
-			RETURN_FALSE;
-		}
-		return;
 	}
 
 	if (stat_info) {
