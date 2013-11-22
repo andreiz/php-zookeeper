@@ -40,6 +40,7 @@
 #include "php_zookeeper.h"
 #include "php_zookeeper_private.h"
 #include "php_zookeeper_session.h"
+#include "php_zookeeper_exceptions.h"
 
 /****************************************
   Helper macros
@@ -72,6 +73,9 @@ typedef struct {
 } php_zk_t;
 
 static zend_class_entry *zookeeper_ce = NULL;
+zend_class_entry *zk_base_exception;
+zend_class_entry *zk_optimeout_exception;
+zend_class_entry *zk_conntimeout_exception;
 
 #ifdef HAVE_ZOOKEEPER_SESSION
 static int le_zookeeper_connection;
@@ -1223,6 +1227,20 @@ ZEND_RSRC_DTOR_FUNC(php_zookeeper_connection_dtor)
 	}
 }
 
+static void php_zk_register_exceptions()
+{
+	zend_class_entry ce;
+
+	INIT_CLASS_ENTRY(ce, "ZookeeperException", NULL);
+	zk_base_exception = zend_register_internal_class_ex(&ce, zend_exception_get_default(), NULL TSRMLS_CC);
+
+	INIT_CLASS_ENTRY(ce, "ZookeeperOperationTimeoutException", NULL);
+	zk_optimeout_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
+
+	INIT_CLASS_ENTRY(ce, "ZookeeperConnectionTimeoutException", NULL);
+	zk_conntimeout_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
+}
+
 int php_zookeeper_get_connection_le()
 {
 	return le_zookeeper_connection;
@@ -1264,6 +1282,9 @@ PHP_MINIT_FUNCTION(zookeeper)
 #ifdef HAVE_ZOOKEEPER_SESSION
 	php_session_register_module(ps_zookeeper_ptr);
 #endif
+
+	php_zk_register_exceptions();
+
 	return SUCCESS;
 }
 /* }}} */
