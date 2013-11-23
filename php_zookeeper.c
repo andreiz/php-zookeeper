@@ -323,9 +323,9 @@ static PHP_METHOD(Zookeeper, getChildren)
 	php_cb_data_t *cb_data = NULL;
 	struct String_vector strings;
 	int i, status = ZOK;
-	long retries = 3;
-	long delay = 1;
-	long backoff = 2;
+	long retries = 5;
+	long delay = 500;
+	long backoff = 250;
 	int tries;
 
 	ZK_METHOD_INIT_VARS;
@@ -384,9 +384,9 @@ static PHP_METHOD(Zookeeper, get)
 	struct Stat stat;
 	int status = ZOK;
 	int length;
-	long retries = 3;
-	long delay = 1;
-	long backoff = 2;
+	long retries = 5;
+	long delay = 500;
+	long backoff = 250;
 	int tries;
 
 	ZK_METHOD_INIT_VARS;
@@ -470,9 +470,9 @@ static PHP_METHOD(Zookeeper, exists)
 	php_cb_data_t *cb_data = NULL;
 	struct Stat stat;
 	int status = ZOK;
-	long retries = 3;
-	long delay = 1;
-	long backoff = 2;
+	long retries = 5;
+	long delay = 500;
+	long backoff = 250;
 	int tries;
 
 	ZK_METHOD_INIT_VARS;
@@ -523,9 +523,9 @@ static PHP_METHOD(Zookeeper, set)
 	zval *stat_info = NULL;
 	struct Stat stat, *stat_ptr = NULL;
 	int status = ZOK;
-	long retries = 3;
-	long delay = 1;
-	long backoff = 2;
+	long retries = 5;
+	long delay = 500;
+	long backoff = 250;
 	int tries;
 
 	ZK_METHOD_INIT_VARS;
@@ -602,9 +602,9 @@ static PHP_METHOD(Zookeeper, getAcl)
 	struct ACL_vector aclv;
 	struct Stat stat;
 	zval *stat_info, *acl_info;
-	long retries = 3;
-	long delay = 1;
-	long backoff = 2;
+	long retries = 5;
+	long delay = 500;
+	long backoff = 250;
 	int tries;
 
 	ZK_METHOD_INIT_VARS;
