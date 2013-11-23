@@ -52,7 +52,7 @@
 #define ZK_METHOD_FETCH_OBJECT                                                 \
     i_obj = (php_zk_t *) zend_object_store_get_object( object TSRMLS_CC );   \
 	if (!i_obj->zk) {	\
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Zookeeper connect was not called");	\
+		php_zk_throw_exception(PHPZK_CONNECT_NOT_CALLED); \
 		return;	\
 	} \
 
@@ -130,6 +130,10 @@ static void php_zk_throw_exception(int zk_status)
 		case PHPZK_CONNECTION_FAILURE:
 			ce = zk_connection_exception;
 			message = "Failed to connect to Zookeeper";
+			break;
+		case PHPZK_CONNECT_NOT_CALLED:
+			ce = zk_connection_exception;
+			message = "Zookeeper->connect() was not called";
 			break;
 		case ZCONNECTIONLOSS:
 			ce = zk_connection_exception;
