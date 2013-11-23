@@ -76,13 +76,38 @@ class Zookeeper {
 
 	public function set( $path, $data, $version = -1, &$stat = null ) {}
 
-	public function get( $path, $watcher_cb = null, &$stat = null, $max_size = 0, $retries = 3, $delay = 1, $backoff = 2 ) {}
+	public function get(
+		$path,
+		$watcher_cb = null,
+		&$stat = null,
+		$max_size = 0,
+		$retries = 5, // Number of retries for connection or operation timeout.
+		$delay = 500,   // Delay between retries in milliseconds
+		$backoff = 250  // Gain in delay for each retry in milliseconds
+	) {}
 
-	public function getChildren( $path, $watcher_cb = null, $retries = 3, $delay = 1, $backoff = 2 ) {}
+	public function getChildren(
+		$path,
+		$watcher_cb = null,
+		$retries = 5, // Number of retries for connection or operation timeout.
+		$delay = 500,   // Delay between retries in milliseconds
+		$backoff = 250  // Gain in delay for each retry in milliseconds
+	) {}
 
-	public function exists( $path, $watcher_cb = null, $retries = 3, $delay = 1, $backoff = 2 )  {}
+	public function exists(
+		$path,
+		$watcher_cb = null,
+		$retries = 5, // Number of retries for connection or operation timeout.
+		$delay = 500,   // Delay between retries in milliseconds
+		$backoff = 250  // Gain in delay for each retry in milliseconds
+	) {}
 
-	public function getAcl( $path, $retries = 3, $delay = 1, $backoff = 2 ) {}
+	public function getAcl(
+		$path,
+		$retries = 5, // Number of retries for connection or operation timeout.
+		$delay = 500,   // Delay between retries in milliseconds
+		$backoff = 250  // Gain in delay for each retry in milliseconds
+	) {}
 
 	public function setAcl( $path, $version, $acls ) {}
 

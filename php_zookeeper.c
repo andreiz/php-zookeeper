@@ -347,9 +347,9 @@ static PHP_METHOD(Zookeeper, getChildren)
 								   cb_data, &strings);
 		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING,
-							 "error: %s (retrying in %ds)",
+							 "error: %s (retrying in %dms)",
 							 zerror(status), delay);
-			sleep(delay);
+			usleep(delay*1000);
 			delay += backoff;
 			continue;
 		} else {
@@ -408,9 +408,9 @@ static PHP_METHOD(Zookeeper, get)
 
 			if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
 				php_error_docref(NULL TSRMLS_CC, E_WARNING,
-								 "error: %s (retrying in %ds)",
+								 "error: %s (retrying in %dms)",
 								 zerror(status), delay);
-				sleep(delay);
+				usleep(delay*1000);
 				delay = (delay+backoff);
 				continue;
 			} else if (status != ZOK) {
@@ -429,9 +429,9 @@ static PHP_METHOD(Zookeeper, get)
 
 		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING,
-							 "error: %s (retrying in %ds)",
+							 "error: %s (retrying in %dms)",
 							 zerror(status), delay);
-			sleep(delay);
+			usleep(delay*1000);
 			delay += backoff;
 			continue;
 		} else if (status != ZOK) {
@@ -492,9 +492,9 @@ static PHP_METHOD(Zookeeper, exists)
 							 cb_data, &stat);
 		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING,
-							 "error: %s (retrying in %ds)",
+							 "error: %s (retrying in %dms)",
 							 zerror(status), delay);
-			sleep(delay);
+			usleep(delay*1000);
 			delay += backoff;
 			continue;
 		} else {
@@ -548,9 +548,9 @@ static PHP_METHOD(Zookeeper, set)
 		status = zoo_set2(i_obj->zk, path, value, value_len, version, stat_ptr);
 		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING,
-							 "error: %s (retrying in %ds)",
+							 "error: %s (retrying in %dms)",
 							 zerror(status), delay);
-			sleep(delay);
+			usleep(delay*1000);
 			delay += backoff;
 			continue;
 		} else {
@@ -620,9 +620,9 @@ static PHP_METHOD(Zookeeper, getAcl)
 		status = zoo_get_acl(i_obj->zk, path, &aclv, &stat);
 		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING,
-							 "error: %s (retrying in %ds)",
+							 "error: %s (retrying in %dms)",
 							 zerror(status), delay);
-			sleep(delay);
+			usleep(delay*1000);
 			delay += backoff;
 			continue;
 		} else {
