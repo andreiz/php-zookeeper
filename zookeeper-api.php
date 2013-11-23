@@ -76,13 +76,13 @@ class Zookeeper {
 
 	public function set( $path, $data, $version = -1, &$stat = null ) {}
 
-	public function get( $path, $watcher_cb = null, &$stat = null, $max_size = 0) {}
+	public function get( $path, $watcher_cb = null, &$stat = null, $max_size = 0, $retries = 3, $delay = 1, $backoff = 2 ) {}
 
-	public function getChildren( $path, $watcher_cb = null ) {}
+	public function getChildren( $path, $watcher_cb = null, $retries = 3, $delay = 1, $backoff = 2 ) {}
 
-	public function exists( $path, $watcher_cb = null ) {}
+	public function exists( $path, $watcher_cb = null, $retries = 3, $delay = 1, $backoff = 2 )  {}
 
-	public function getAcl( $path ) {}
+	public function getAcl( $path, $retries = 3, $delay = 1, $backoff = 2 ) {}
 
 	public function setAcl( $path, $version, $acls ) {}
 
