@@ -254,7 +254,7 @@ static PHP_METHOD(Zookeeper, create)
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!a!|l", &path, &path_len,
-							  &value, &value_len, &acl_info, &flags) == FAILURE) {
+	                          &value, &value_len, &acl_info, &flags) == FAILURE) {
 		return;
 	}
 
@@ -296,7 +296,7 @@ static PHP_METHOD(Zookeeper, delete)
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &path, &path_len,
-							  &version) == FAILURE) {
+	                          &version) == FAILURE) {
 		return;
 	}
 
@@ -331,7 +331,7 @@ static PHP_METHOD(Zookeeper, getChildren)
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!lll", &path, &path_len, &fci,
-							  &fcc, &retries, &delay, &backoff) == FAILURE) {
+	                          &fcc, &retries, &delay, &backoff) == FAILURE) {
 		return;
 	}
 
@@ -343,12 +343,12 @@ static PHP_METHOD(Zookeeper, getChildren)
 
 	for (tries = 0; tries <= retries; tries++) {
 		status = zoo_wget_children(i_obj->zk, path,
-								   (fci.size != 0) ? php_zk_watcher_marshal : NULL,
-								   cb_data, &strings);
+		                           (fci.size != 0) ? php_zk_watcher_marshal : NULL,
+		                           cb_data, &strings);
 		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING,
-							 "error: %s (retrying in %dms)",
-							 zerror(status), delay);
+			                 "error: %s (retrying in %dms)",
+			                 zerror(status), delay);
 			usleep(delay*1000);
 			delay += backoff;
 			continue;
@@ -392,7 +392,7 @@ static PHP_METHOD(Zookeeper, get)
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!zllll", &path, &path_len, &fci,
-							  &fcc, &stat_info, &max_size, &retries, &delay, &backoff) == FAILURE) {
+	                          &fcc, &stat_info, &max_size, &retries, &delay, &backoff) == FAILURE) {
 		return;
 	}
 
@@ -408,10 +408,10 @@ static PHP_METHOD(Zookeeper, get)
 
 			if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
 				php_error_docref(NULL TSRMLS_CC, E_WARNING,
-								 "error: %s (retrying in %dms)",
-								 zerror(status), delay);
+				                 "error: %s (retrying in %dms)",
+				                 zerror(status), delay);
 				usleep(delay*1000);
-				delay = (delay+backoff);
+				delay += backoff;
 				continue;
 			} else if (status != ZOK) {
 				break;
@@ -424,13 +424,13 @@ static PHP_METHOD(Zookeeper, get)
 
 		buffer = emalloc (length+1);
 		status = zoo_wget(i_obj->zk, path, (fci.size != 0) ? php_zk_watcher_marshal : NULL,
-						  cb_data, buffer, &length, &stat);
+		                  cb_data, buffer, &length, &stat);
 		buffer[length] = 0;
 
 		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING,
-							 "error: %s (retrying in %dms)",
-							 zerror(status), delay);
+			                 "error: %s (retrying in %dms)",
+			                 zerror(status), delay);
 			usleep(delay*1000);
 			delay += backoff;
 			continue;
@@ -478,7 +478,7 @@ static PHP_METHOD(Zookeeper, exists)
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!lll", &path, &path_len, &fci,
-							  &fcc, &retries, &delay, &backoff) == FAILURE) {
+	                          &fcc, &retries, &delay, &backoff) == FAILURE) {
 		return;
 	}
 
@@ -489,11 +489,11 @@ static PHP_METHOD(Zookeeper, exists)
 	}
 	for (tries=0; tries <= retries; tries++) {
 		status = zoo_wexists(i_obj->zk, path, (fci.size != 0) ? php_zk_watcher_marshal : NULL,
-							 cb_data, &stat);
+		                     cb_data, &stat);
 		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING,
-							 "error: %s (retrying in %dms)",
-							 zerror(status), delay);
+			                 "error: %s (retrying in %dms)",
+			                 zerror(status), delay);
 			usleep(delay*1000);
 			delay += backoff;
 			continue;
@@ -531,7 +531,7 @@ static PHP_METHOD(Zookeeper, set)
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!|lzlll", &path, &path_len,
-							  &value, &value_len, &version, &stat_info, &retries, &delay, &backoff) == FAILURE) {
+	                          &value, &value_len, &version, &stat_info, &retries, &delay, &backoff) == FAILURE) {
 		return;
 	}
 
@@ -548,8 +548,8 @@ static PHP_METHOD(Zookeeper, set)
 		status = zoo_set2(i_obj->zk, path, value, value_len, version, stat_ptr);
 		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING,
-							 "error: %s (retrying in %dms)",
-							 zerror(status), delay);
+			                 "error: %s (retrying in %dms)",
+			                 zerror(status), delay);
 			usleep(delay*1000);
 			delay += backoff;
 			continue;
@@ -610,7 +610,7 @@ static PHP_METHOD(Zookeeper, getAcl)
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s!lll", &path, &path_len,
-							  &retries, &delay, &backoff) == FAILURE) {
+	                          &retries, &delay, &backoff) == FAILURE) {
 		return;
 	}
 
@@ -620,8 +620,8 @@ static PHP_METHOD(Zookeeper, getAcl)
 		status = zoo_get_acl(i_obj->zk, path, &aclv, &stat);
 		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING,
-							 "error: %s (retrying in %dms)",
-							 zerror(status), delay);
+			                 "error: %s (retrying in %dms)",
+			                 zerror(status), delay);
 			usleep(delay*1000);
 			delay += backoff;
 			continue;
@@ -657,7 +657,7 @@ static PHP_METHOD(Zookeeper, setAcl)
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sla", &path, &path_len,
-							  &version, &acl_info) == FAILURE) {
+	                          &version, &acl_info) == FAILURE) {
 		return;
 	}
 
@@ -768,7 +768,7 @@ static PHP_METHOD(Zookeeper, addAuth)
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|f", &scheme, &scheme_len, &cert,
-							  &cert_len, &fci, &fcc) == FAILURE) {
+	                          &cert_len, &fci, &fcc) == FAILURE) {
 		return;
 	}
 
@@ -778,7 +778,7 @@ static PHP_METHOD(Zookeeper, addAuth)
 		cb_data = php_cb_data_new(&fci, &fcc, 0 TSRMLS_CC);
 	}
 	status = zoo_add_auth(i_obj->zk, scheme, cert, cert_len,
-						  (fci.size != 0) ? php_zk_completion_marshal : NULL, cb_data);
+	                      (fci.size != 0) ? php_zk_completion_marshal : NULL, cb_data);
 	if (status != ZOK) {
 		php_zk_throw_exception(status);
 		return;
@@ -1002,8 +1002,8 @@ static void php_parse_acl_list(zval *z_acl, struct ACL_vector *aclv)
 	aclv->data = (struct ACL *)calloc(size, sizeof(struct ACL));
 
 	for (zend_hash_internal_pointer_reset(Z_ARRVAL_P(z_acl));
-		 zend_hash_get_current_data(Z_ARRVAL_P(z_acl), (void**)&entry) == SUCCESS;
-		 zend_hash_move_forward(Z_ARRVAL_P(z_acl))) {
+		zend_hash_get_current_data(Z_ARRVAL_P(z_acl), (void**)&entry) == SUCCESS;
+		zend_hash_move_forward(Z_ARRVAL_P(z_acl))) {
 
 		if (Z_TYPE_PP(entry) != IS_ARRAY) {
 			continue;
@@ -1380,7 +1380,7 @@ PHP_MINIT_FUNCTION(zookeeper)
 
 #ifdef ZTS
 	ts_allocate_id(&php_zookeeper_globals_id, sizeof(zend_php_zookeeper_globals),
-				   (ts_allocate_ctor) php_zk_init_globals, (ts_allocate_dtor) php_zk_destroy_globals);
+	               (ts_allocate_ctor) php_zk_init_globals, (ts_allocate_dtor) php_zk_destroy_globals);
 #else
 	php_zk_init_globals(&php_zookeeper_globals TSRMLS_CC);
 #endif
