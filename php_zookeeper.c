@@ -336,7 +336,7 @@ static PHP_METHOD(Zookeeper, delete)
 		} else {
 			break;
 		}
-    }
+	}
 
 	if (status != ZOK) {
 		php_zk_throw_exception(status);
