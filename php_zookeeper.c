@@ -275,7 +275,7 @@ static PHP_METHOD(Zookeeper, delete)
 	ZK_METHOD_FETCH_OBJECT;
 
 	for (try_count = 0; try_count < max_tries; try_count++) {
-	    status = zoo_delete(i_obj->zk, path, version);
+		status = zoo_delete(i_obj->zk, path, version);
 		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && ((try_count+1) < max_tries)) {
 			php_zk_retry_wait(status, &delay, backoff);
 			continue;
