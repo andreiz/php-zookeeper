@@ -51,7 +51,7 @@
 
 #define ZK_METHOD_INIT_RETRY \
 	int  try_count  = 0;     \
-    long max_tries  = 1;     \
+	long max_tries  = 1;     \
 	long delay      = 100;   \
 	long backoff    = 2;
 
