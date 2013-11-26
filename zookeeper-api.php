@@ -68,48 +68,75 @@ class Zookeeper {
 
 	public function connect( $host, $watcher_cb = null, $recv_timeout = 10000) {}
 
-	public function create( $host, $watcher_cb = null, $recv_timeout = 10000) {}
+	public function create(
+		$path,
+		$value,
+		$acl,
+		$flags = null,
+		$retries = 0,
+		$delay = 0,
+		$backoff = 0
+	) {}
 
-	public function create( $path, $value, $acl, $flags = null ) {}
+	public function delete(
+		$path,
+		$version = -1,
+		$retries = 0,
+		$delay = 0,
+		$backoff = 0
+	) {}
 
-	public function delete( $path, $version = -1 ) {}
-
-	public function set( $path, $data, $version = -1, &$stat = null ) {}
+	public function set(
+		$path,
+		$data,
+		$version = -1,
+		&$stat = null,
+		$retries = 0,
+		$delay = 0,
+		$backoff = 0
+	) {}
 
 	public function get(
 		$path,
 		$watcher_cb = null,
 		&$stat = null,
 		$max_size = 0,
-		$retries = 5, // Number of retries for connection or operation timeout.
-		$delay = 500,   // Delay between retries in milliseconds
-		$backoff = 250  // Gain in delay for each retry in milliseconds
+		$retries = 0,
+		$delay = 0,
+		$backoff = 0
 	) {}
 
 	public function getChildren(
 		$path,
 		$watcher_cb = null,
-		$retries = 5, // Number of retries for connection or operation timeout.
-		$delay = 500,   // Delay between retries in milliseconds
-		$backoff = 250  // Gain in delay for each retry in milliseconds
+		$retries = 0,
+		$delay = 0,
+		$backoff = 0
 	) {}
 
 	public function exists(
 		$path,
 		$watcher_cb = null,
-		$retries = 5, // Number of retries for connection or operation timeout.
-		$delay = 500,   // Delay between retries in milliseconds
-		$backoff = 250  // Gain in delay for each retry in milliseconds
+		$retries = 0,
+		$delay = 0,
+		$backoff = 0
 	) {}
 
 	public function getAcl(
 		$path,
-		$retries = 5, // Number of retries for connection or operation timeout.
-		$delay = 500,   // Delay between retries in milliseconds
-		$backoff = 250  // Gain in delay for each retry in milliseconds
+		$retries = 0,
+		$delay = 0,
+		$backoff = 0
 	) {}
 
-	public function setAcl( $path, $version, $acls ) {}
+	public function setAcl(
+		$path,
+		$version,
+		$acls,
+		$retries = 0,
+		$delay = 0,
+		$backoff = 0
+	) {}
 
 	public function getClientId( ) {}
 
@@ -135,4 +162,3 @@ class Zookeeper {
 	static public function setDeterministicConnOrder( $trueOrFalse ) {}
 
 }
-
