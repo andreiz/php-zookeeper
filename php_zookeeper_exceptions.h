@@ -37,7 +37,7 @@ static void php_zk_register_exceptions()
 	zk_nonode_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
 }
 
-zend_class_entry * php_zk_get_exception_with_message(zend_class_entry *ce, char *message)
+static zend_class_entry * php_zk_get_exception_with_message(zend_class_entry *ce, char *message)
 {
 	zend_declare_property_string(ce, "message", strlen("message"), message, ZEND_ACC_PUBLIC TSRMLS_CC);
 	return ce;
