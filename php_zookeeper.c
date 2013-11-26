@@ -113,7 +113,7 @@ static void php_aclv_to_array(const struct ACL_vector *aclv, zval *array);
 /****************************************
   Method implementations
 ****************************************/
-static void php_zk_retry_wait(int zk_status, long *delay, int backoff)
+static void php_zk_retry_wait(int zk_status, long *delay, long backoff)
 {
 	php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s (retrying in %ldms)",
 	                 zerror(zk_status), *delay);
