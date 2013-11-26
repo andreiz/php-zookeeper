@@ -86,7 +86,7 @@ static void php_zk_throw_exception(int zk_status)
 		message = (char *)zerror(zk_status);
 	}
 
-	zend_throw_exception(php_zk_get_exception_with_message(ce, message), NULL, 0 TSRMLS_CC);
+	zend_throw_exception(php_zk_get_exception_with_message(ce, message), NULL, zk_status);
 	return;
 }
 
