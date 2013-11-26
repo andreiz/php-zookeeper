@@ -15,10 +15,16 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <email>andrei@php.net</email>
   <active>yes</active>
  </lead>
+ <contributor>
+  <name>Ryan Uber</name>
+  <user>ryanuber</user>
+  <email>ru@ryanuber.com</email>
+  <active>yes</active>
+ </contributor>
  <date>2012-01-13</date>
  <version>
-  <release>0.2.1</release>
-  <api>0.2.0</api>
+  <release>0.3.0</release>
+  <api>0.3.0</api>
  </version>
  <stability>
   <release>beta</release>
@@ -26,7 +32,10 @@ http://pear.php.net/dtd/package-2.0.xsd">
  </stability>
  <license uri="http://www.php.net/license">PHP</license>
  <notes>
-- Package up missed source files
+- Ability to specify max tries per request with delay and backoff multiplier
+- Throw exceptions when unexpected conditions arise
+- Adjust Zookeeper API calls to LOG() to use newer syntax
+- Requires libzookeeper >= 3.5.0
  </notes>
  <contents>
   <dir name="/">
@@ -41,6 +50,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
    <file role='src' name='php_zookeeper_private.h'/>
    <file role='src' name='php_zookeeper_session.c'/>
    <file role='src' name='php_zookeeper_session.h'/>
+   <file role='src' name='php_zookeeper_exceptions.h'/>
    <file role='src' name='zoo_lock.c'/>
    <file role='src' name='zoo_lock.h'/>
   </dir> <!-- / -->
@@ -60,6 +70,18 @@ http://pear.php.net/dtd/package-2.0.xsd">
  <providesextension>zookeeper</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability><release>beta</release><api>beta</api></stability>
+   <version><release>0.3.0</release><api>0.3.0</api></version>
+   <date>2013-11-25</date>
+   <notes>
+- Ability to specify max tries per request with delay and backoff multiplier
+- Throw exceptions when unexpected conditions arise
+- Adjust Zookeeper API calls to LOG() to use newer syntax
+- Requires libzookeeper >= 3.5.0
+   </notes>
+  </release>
+
   <release>
    <stability><release>beta</release><api>beta</api></stability>
    <version><release>0.2.1</release><api>0.2.0</api></version>

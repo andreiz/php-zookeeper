@@ -1,5 +1,12 @@
 zookeeper extension changelog
 
+Version 0.3.0
+-------------
+	* Ability to specify max tries per request with delay and backoff multiplier
+	* Throw exceptions when unexpected conditions arise
+	* Adjust Zookeeper API calls to LOG() to use newer syntax
+	* Requires libzookeeper >= 3.5.0
+
 Version 0.2.2
 -------------
 	* PHP 5.4 compatibility
