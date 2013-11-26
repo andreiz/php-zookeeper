@@ -49,6 +49,12 @@
     zval*             object  = getThis(); \
     php_zk_t*         i_obj   = NULL;      \
 
+#define ZK_METHOD_INIT_RETRY \
+	int  try_count  = 0;     \
+    long max_tries  = 1;     \
+	long delay      = 100;   \
+	long backoff    = 2;
+
 #define ZK_METHOD_FETCH_OBJECT                                                 \
     i_obj = (php_zk_t *) zend_object_store_get_object( object TSRMLS_CC );   \
 	if (!i_obj->zk) {	\
@@ -163,7 +169,7 @@ static void php_zk_retry_wait(int zk_status, long *delay, int backoff)
 	php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s (retrying in %ldms)",
 	                 zerror(zk_status), *delay);
 	usleep(*delay * 1000);
-	*delay += backoff;
+	*delay *= backoff;
 	return;
 }
 
@@ -253,17 +259,11 @@ static PHP_METHOD(Zookeeper, create)
 	int realpath_max = 0;
 	struct ACL_vector aclv = { 0, };
 	int status = ZOK;
-
-	// Defaults should be 0. Retrying write operations might be dangerous.
-	long retries = 0;
-	long delay = 0;
-	long backoff = 0;
-	int tries;
-
 	ZK_METHOD_INIT_VARS;
+	ZK_METHOD_INIT_RETRY;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!a!|llll", &path, &path_len,
-	                          &value, &value_len, &acl_info, &flags, &retries, &delay,
+	                          &value, &value_len, &acl_info, &flags, &max_tries, &delay,
 	                          &backoff) == FAILURE) {
 		return;
 	}
@@ -283,10 +283,10 @@ static PHP_METHOD(Zookeeper, create)
 
 	php_parse_acl_list(acl_info, &aclv);
 
-	for (tries = 0; tries <= retries; tries++) {
+	for (try_count = 0; try_count < max_tries; try_count++) {
 		status = zoo_create(i_obj->zk, path, value, value_len, (acl_info ? &aclv : 0), flags,
 							realpath, realpath_max);
-		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
+		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && ((try_count+1) < max_tries)) {
 			php_zk_retry_wait(status, &delay, backoff);
 			continue;
 		} else {
@@ -312,25 +312,19 @@ static PHP_METHOD(Zookeeper, delete)
 	int path_len;
 	long version = -1;
 	int status = ZOK;
-
-	// Defaults should be 0. Retrying write operations might be dangerous.
-	long retries = 0;
-	long delay = 0;
-	long backoff = 0;
-	int tries;
-
 	ZK_METHOD_INIT_VARS;
+	ZK_METHOD_INIT_RETRY;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|llll", &path, &path_len,
-	                          &version, &retries, &delay, &backoff) == FAILURE) {
+	                          &version, &max_tries, &delay, &backoff) == FAILURE) {
 		return;
 	}
 
 	ZK_METHOD_FETCH_OBJECT;
 
-	for (tries = 0; tries <= retries; tries++) {
+	for (try_count = 0; try_count < max_tries; try_count++) {
 	    status = zoo_delete(i_obj->zk, path, version);
-		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
+		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && ((try_count+1) < max_tries)) {
 			php_zk_retry_wait(status, &delay, backoff);
 			continue;
 		} else {
@@ -358,15 +352,11 @@ static PHP_METHOD(Zookeeper, getChildren)
 	php_cb_data_t *cb_data = NULL;
 	struct String_vector strings;
 	int i, status = ZOK;
-	long retries = 5;
-	long delay = 500;
-	long backoff = 250;
-	int tries;
-
 	ZK_METHOD_INIT_VARS;
+	ZK_METHOD_INIT_RETRY;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!lll", &path, &path_len, &fci,
-	                          &fcc, &retries, &delay, &backoff) == FAILURE) {
+	                          &fcc, &max_tries, &delay, &backoff) == FAILURE) {
 		return;
 	}
 
@@ -376,11 +366,11 @@ static PHP_METHOD(Zookeeper, getChildren)
 		cb_data = php_cb_data_new(&fci, &fcc, 1 TSRMLS_CC);
 	}
 
-	for (tries = 0; tries <= retries; tries++) {
+	for (try_count = 0; try_count < max_tries; try_count++) {
 		status = zoo_wget_children(i_obj->zk, path,
 		                           (fci.size != 0) ? php_zk_watcher_marshal : NULL,
 		                           cb_data, &strings);
-		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
+		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && ((try_count+1) < max_tries)) {
 			php_zk_retry_wait(status, &delay, backoff);
 			continue;
 		} else {
@@ -415,15 +405,11 @@ static PHP_METHOD(Zookeeper, get)
 	struct Stat stat;
 	int status = ZOK;
 	int length;
-	long retries = 5;
-	long delay = 500;
-	long backoff = 250;
-	int tries;
-
 	ZK_METHOD_INIT_VARS;
+	ZK_METHOD_INIT_RETRY;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!zllll", &path, &path_len, &fci,
-	                          &fcc, &stat_info, &max_size, &retries, &delay, &backoff) == FAILURE) {
+	                          &fcc, &stat_info, &max_size, &max_tries, &delay, &backoff) == FAILURE) {
 		return;
 	}
 
@@ -433,11 +419,11 @@ static PHP_METHOD(Zookeeper, get)
 		cb_data = php_cb_data_new(&fci, &fcc, 1 TSRMLS_CC);
 	}
 
-	for (tries=0; tries <= retries; tries++) {
+	for (try_count=0; try_count < max_tries; try_count++) {
 		if (max_size <= 0) {
 			status = zoo_exists(i_obj->zk, path, 1, &stat);
 
-			if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
+			if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && ((try_count+1) < max_tries)) {
 				php_zk_retry_wait(status, &delay, backoff);
 				continue;
 			} else if (status != ZOK) {
@@ -454,7 +440,7 @@ static PHP_METHOD(Zookeeper, get)
 		                  cb_data, buffer, &length, &stat);
 		buffer[length] = 0;
 
-		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
+		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && ((try_count+1) < max_tries)) {
 			php_zk_retry_wait(status, &delay, backoff);
 			continue;
 		} else if (status != ZOK) {
@@ -493,15 +479,11 @@ static PHP_METHOD(Zookeeper, exists)
 	php_cb_data_t *cb_data = NULL;
 	struct Stat stat;
 	int status = ZOK;
-	long retries = 5;
-	long delay = 500;
-	long backoff = 250;
-	int tries;
-
 	ZK_METHOD_INIT_VARS;
+	ZK_METHOD_INIT_RETRY;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!lll", &path, &path_len, &fci,
-	                          &fcc, &retries, &delay, &backoff) == FAILURE) {
+	                          &fcc, &max_tries, &delay, &backoff) == FAILURE) {
 		return;
 	}
 
@@ -510,10 +492,10 @@ static PHP_METHOD(Zookeeper, exists)
 	if (fci.size != 0) {
 		cb_data = php_cb_data_new(&fci, &fcc, 1 TSRMLS_CC);
 	}
-	for (tries=0; tries <= retries; tries++) {
+	for (try_count=0; try_count < max_tries; try_count++) {
 		status = zoo_wexists(i_obj->zk, path, (fci.size != 0) ? php_zk_watcher_marshal : NULL,
 		                     cb_data, &stat);
-		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
+		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && ((try_count+1) < max_tries)) {
 			php_zk_retry_wait(status, &delay, backoff);
 			continue;
 		} else {
@@ -542,17 +524,11 @@ static PHP_METHOD(Zookeeper, set)
 	zval *stat_info = NULL;
 	struct Stat stat, *stat_ptr = NULL;
 	int status = ZOK;
-
-	// Defaults should be 0. Retrying write operations might be dangerous.
-	long retries = 0;
-	long delay = 0;
-	long backoff = 0;
-	int tries;
-
 	ZK_METHOD_INIT_VARS;
+	ZK_METHOD_INIT_RETRY;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!|lzlll", &path, &path_len,
-	                          &value, &value_len, &version, &stat_info, &retries, &delay,
+	                          &value, &value_len, &version, &stat_info, &max_tries, &delay,
 	                          &backoff) == FAILURE) {
 		return;
 	}
@@ -566,9 +542,9 @@ static PHP_METHOD(Zookeeper, set)
 		value_len = -1;
 	}
 
-	for (tries = 0; tries <= retries; tries++) {
+	for (try_count = 0; try_count < max_tries; try_count++) {
 		status = zoo_set2(i_obj->zk, path, value, value_len, version, stat_ptr);
-		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
+		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && ((try_count+1) < max_tries)) {
 			php_zk_retry_wait(status, &delay, backoff);
 			continue;
 		} else {
@@ -620,23 +596,19 @@ static PHP_METHOD(Zookeeper, getAcl)
 	struct ACL_vector aclv;
 	struct Stat stat;
 	zval *stat_info, *acl_info;
-	long retries = 5;
-	long delay = 500;
-	long backoff = 250;
-	int tries;
-
 	ZK_METHOD_INIT_VARS;
+	ZK_METHOD_INIT_RETRY;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s!lll", &path, &path_len,
-	                          &retries, &delay, &backoff) == FAILURE) {
+	                          &max_tries, &delay, &backoff) == FAILURE) {
 		return;
 	}
 
 	ZK_METHOD_FETCH_OBJECT;
 
-	for (tries=0; tries <= retries; tries++) {
+	for (try_count=0; try_count < max_tries; try_count++) {
 		status = zoo_get_acl(i_obj->zk, path, &aclv, &stat);
-		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
+		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && ((try_count+1) < max_tries)) {
 			php_zk_retry_wait(status, &delay, backoff);
 			continue;
 		} else {
@@ -668,17 +640,11 @@ static PHP_METHOD(Zookeeper, setAcl)
 	zval *acl_info;
 	struct ACL_vector aclv;
 	int status = ZOK;
-
-	// Defaults should be 0. Retrying write operations might be dangerous.
-	long retries = 0;
-	long delay = 0;
-	long backoff = 0;
-	int tries;
-
 	ZK_METHOD_INIT_VARS;
+	ZK_METHOD_INIT_RETRY;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sla!lll", &path, &path_len,
-	                          &version, &acl_info, &retries, &delay,
+	                          &version, &acl_info, &max_tries, &delay,
 	                          &backoff) == FAILURE) {
 		return;
 	}
@@ -687,9 +653,9 @@ static PHP_METHOD(Zookeeper, setAcl)
 
 	php_parse_acl_list(acl_info, &aclv);
 
-	for (tries=0; tries <= retries; tries++) {
+	for (try_count=0; try_count < max_tries; try_count++) {
 		status = zoo_set_acl(i_obj->zk, path, version, &aclv);
-		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && (tries < retries)) {
+		if ((status == ZOPERATIONTIMEOUT || status == ZCONNECTIONLOSS) && ((try_count+1) < max_tries)) {
 			php_zk_retry_wait(status, &delay, backoff);
 			continue;
 		} else {

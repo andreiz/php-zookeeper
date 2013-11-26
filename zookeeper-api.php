@@ -62,7 +62,6 @@ class Zookeeper {
 	const NOTHING         = -117;
 	const SESSIONMOVED    = -118;
 
-
 	/* if the host is provided, attempt to connect. */
 	public function __construct( $host = '', $watcher_cb = null, $recv_timeout = 10000) {}
 
@@ -73,17 +72,17 @@ class Zookeeper {
 		$value,
 		$acl,
 		$flags = null,
-		$retries = 0,
-		$delay = 0,
-		$backoff = 0
+		$max_tries = 1,
+		$delay = 100,
+		$backoff = 2
 	) {}
 
 	public function delete(
 		$path,
 		$version = -1,
-		$retries = 0,
-		$delay = 0,
-		$backoff = 0
+		$max_tries = 1,
+		$delay = 100,
+		$backoff = 2
 	) {}
 
 	public function set(
@@ -91,9 +90,9 @@ class Zookeeper {
 		$data,
 		$version = -1,
 		&$stat = null,
-		$retries = 0,
-		$delay = 0,
-		$backoff = 0
+		$max_tries = 1,
+		$delay = 100,
+		$backoff = 2
 	) {}
 
 	public function get(
@@ -101,41 +100,41 @@ class Zookeeper {
 		$watcher_cb = null,
 		&$stat = null,
 		$max_size = 0,
-		$retries = 0,
-		$delay = 0,
-		$backoff = 0
+		$max_tries = 1,
+		$delay = 100,
+		$backoff = 2
 	) {}
 
 	public function getChildren(
 		$path,
 		$watcher_cb = null,
-		$retries = 0,
-		$delay = 0,
-		$backoff = 0
+		$max_tries = 1,
+		$delay = 100,
+		$backoff = 2
 	) {}
 
 	public function exists(
 		$path,
 		$watcher_cb = null,
-		$retries = 0,
-		$delay = 0,
-		$backoff = 0
+		$max_tries = 1,
+		$delay = 100,
+		$backoff = 2
 	) {}
 
 	public function getAcl(
 		$path,
-		$retries = 0,
-		$delay = 0,
-		$backoff = 0
+		$max_tries = 1,
+		$delay = 100,
+		$backoff = 2
 	) {}
 
 	public function setAcl(
 		$path,
 		$version,
 		$acls,
-		$retries = 0,
-		$delay = 0,
-		$backoff = 0
+		$max_tries = 1,
+		$delay = 100,
+		$backoff = 2
 	) {}
 
 	public function getClientId( ) {}
