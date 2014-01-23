@@ -339,11 +339,6 @@ static PHP_METHOD(Zookeeper, get)
 					  cb_data, buffer, &length, &stat);
 	buffer[length] = 0;
 
-	/* Length will be returned as -1 if the znode carries a NULL */
-	if (length == -1) {
-		RETURN_NULL();
-	}
-
 	if (status != ZOK) {
 		efree (buffer);
 		php_cb_data_destroy(&cb_data);
@@ -360,6 +355,12 @@ static PHP_METHOD(Zookeeper, get)
 		zval_dtor(stat_info);
 		php_stat_to_array(&stat, stat_info);
 	}
+
+	/* Length will be returned as -1 if the znode carries a NULL */
+	if (length == -1) {
+		RETURN_NULL();
+	}
+
 	RETURN_STRINGL(buffer, length, 0);
 }
 /* }}} */
