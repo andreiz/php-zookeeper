@@ -130,6 +130,26 @@ class Zookeeper_Example
 		}
 		return $this->zookeeper->getChildren($path);
 	}
+	
+	/**
+	 * Delete the node if it does not have any children
+	 * 
+	 * @param string $path the path to the node
+	 * 
+	 * @return true if node is deleted else null
+	 */
+	 
+	 public function deleteNode($path)
+	 {
+	 	if(!this->zookeeper->exists($path))
+	 	{
+	 		return null;
+	 	}
+	 	else
+	 	{
+	 		return $this->zookeeper->delete($path);
+	 	}
+	 }
 }
 
 
