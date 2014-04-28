@@ -24,7 +24,7 @@
  * @license   http://www.php.net/license The PHP License, version 3.01
  * @link      https://github.com/andreiz/php-zookeeper
  */
-class Zookeeper_Example
+class Zookeeper_Example extends Zookeeper
 {
 	/**
 	 * @var Zookeeper
@@ -141,7 +141,7 @@ class Zookeeper_Example
 	 
 	 public function deleteNode($path)
 	 {
-	 	if(!this->zookeeper->exists($path))
+	 	if(!$this->zookeeper->exists($path))
 	 	{
 	 		return null;
 	 	}
