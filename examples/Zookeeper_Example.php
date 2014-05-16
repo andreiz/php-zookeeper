@@ -24,12 +24,17 @@
  * @license   http://www.php.net/license The PHP License, version 3.01
  * @link      https://github.com/andreiz/php-zookeeper
  */
-class Zookeeper_Example extends Zookeeper
+class Zookeeper_Example
 {
 	/**
 	 * @var Zookeeper
 	 */
 	private $zookeeper;
+
+    /**
+      * @var Callback container
+      */
+    private $callback = array();
 
 	/**
 	 * Constructor
@@ -150,6 +155,75 @@ class Zookeeper_Example extends Zookeeper
 	 		return $this->zookeeper->delete($path);
 	 	}
 	 }
+     
+    /**
+	 * Wath a given path
+	 * @param string $path the path to node
+	 * @param callable $callback callback function
+	 * @return string|null
+	 */
+	public function watch($path, $callback)
+	{
+		if (!is_callable($callback)) {
+			return null;
+		}
+		
+		if ($this->zookeeper->exists($path)) {
+			if (!isset($this->callback[$path])) {
+				$this->callback[$path] = array();
+			}
+			if (!in_array($callback, $this->callback[$path])) {
+				$this->callback[$path][] = $callback;
+				return $this->zookeeper->get($path, array($this, 'watchCallback'));
+			}
+		}
+	}
+	
+	/**
+	 * Wath event callback warper
+	 * @param int $event_type
+	 * @param int $stat
+	 * @param string $path
+	 * @return the return of the callback or null
+	 */
+	public function watchCallback($event_type, $stat, $path)
+	{
+		if (!isset($this->callback[$path])) {
+			return null;
+		}
+		
+		foreach ($this->callback[$path] as $callback) {
+			$this->zookeeper->get($path, array($this, 'watchCallback'));
+			return call_user_func($callback);
+		}
+	}
+	
+	/**
+	 * Delete watch callback on a node, delete all callback when $callback is null
+	 * @param string $path
+	 * @param callable $callback
+	 * @return boolean|NULL
+	 */
+	public function cancelWatch($path, $callback = null)
+	{
+		if (isset($this->callback[$path])) {
+			if (empty($callback)) {
+				unset($this->callback[$path]);
+				$this->zookeeper->get($path); //reset the callback
+				return true;
+			} else {
+				$key = array_search($callback, $this->callback[$path]);
+				if ($key !== false) {
+					unset($this->callback[$path][$key]);
+					return true;
+				} else {
+					return null;
+				}
+			}
+		} else {
+			return null;
+		}
+	}
 }
 
 
@@ -163,3 +237,14 @@ var_dump($zk->getChildren('/'));
 var_dump($zk->set('/foo/001', 'bar1'));
 var_dump($zk->set('/foo/002', 'bar2'));
 var_dump($zk->getChildren('/foo'));
+
+//watch example
+function callback() {
+    echo "in watch callback\n";
+}
+$zk->set('/bar', 1);
+$ret = $zk->watch('/bar', 'callback'); 
+$zk->set('/bar', 2);
+while (true) {
+    sleep(1);
+}
