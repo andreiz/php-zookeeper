@@ -692,7 +692,7 @@ static PHP_METHOD(Zookeeper, setLogStream)
 		RETURN_FALSE;
 	}
 
-	if (FAILURE == php_stream_cast(stream, PHP_STREAM_AS_STDIO, (void *) &fp, REPORT_ERRORS)) {
+	if (FAILURE == php_stream_cast(stream, PHP_STREAM_AS_STDIO, (void **) &fp, REPORT_ERRORS)) {
 		RETURN_FALSE;
 	}
 
@@ -1078,6 +1078,7 @@ static zend_function_entry zookeeper_class_methods[] = {
     { NULL, NULL, NULL }
 };
 #undef ZK_ME
+#undef ZK_ME_STATIC
 /* }}} */
 
 /* {{{ zookeeper_module_entry
