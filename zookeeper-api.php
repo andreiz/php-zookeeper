@@ -68,8 +68,6 @@ class Zookeeper {
 
 	public function connect( $host, $watcher_cb = null, $recv_timeout = 10000) {}
 
-	public function create( $host, $watcher_cb = null, $recv_timeout = 10000) {}
-
 	public function create( $path, $value, $acl, $flags = null ) {}
 
 	public function delete( $path, $version = -1 ) {}
