@@ -131,6 +131,8 @@ static void php_zookeeper_connect_impl(INTERNAL_FUNCTION_PARAMETERS, char *host,
 	if (zk == NULL) {
 		php_error_docref(NULL TSRMLS_CC, E_ERROR, "could not init zookeeper instance");
 		/* not reached */
+		ZVAL_NULL(object);
+		return;
 	}
 
 	i_obj->zk = zk;
