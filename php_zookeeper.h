@@ -20,6 +20,7 @@
 #define PHP_ZOOKEEPER_H
 
 #include <zookeeper.h>
+#include <zookeeper_version.h>
 #include <php.h>
 
 #ifdef HAVE_CONFIG_H
