@@ -195,7 +195,6 @@ static PHP_METHOD(Zookeeper, create)
 	char *realpath;
 	int realpath_max = 0;
 	struct ACL_vector aclv = { 0, };
-	//int status = ZOK;
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!a!|l", &path, &path_len,
@@ -238,7 +237,6 @@ static PHP_METHOD(Zookeeper, delete)
 	char *path;
 	int path_len;
 	long version = -1;
-	//int status = ZOK;
 
 	ZK_METHOD_INIT_VARS;
 
@@ -271,7 +269,7 @@ static PHP_METHOD(Zookeeper, getChildren)
 	zend_fcall_info_cache fcc = empty_fcall_info_cache;
 	php_cb_data_t *cb_data = NULL;
 	struct String_vector strings;
-	int i/*, status = ZOK*/;
+	int i;
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!", &path, &path_len, &fci,
@@ -315,7 +313,6 @@ static PHP_METHOD(Zookeeper, get)
 	char *buffer;
 	long max_size = 0;
 	struct Stat stat;
-	//int status = ZOK;
 	int length;
 	ZK_METHOD_INIT_VARS;
 
@@ -389,7 +386,6 @@ static PHP_METHOD(Zookeeper, exists)
 	zend_fcall_info_cache fcc = empty_fcall_info_cache;
 	php_cb_data_t *cb_data = NULL;
 	struct Stat stat;
-	//int status = ZOK;
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|f!", &path, &path_len, &fci,
@@ -430,7 +426,6 @@ static PHP_METHOD(Zookeeper, set)
 	long version = -1;
 	zval *stat_info = NULL;
 	struct Stat stat, *stat_ptr = NULL;
-	//int status = ZOK;
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!|lz", &path, &path_len,
@@ -467,7 +462,6 @@ static PHP_METHOD(Zookeeper, set)
 static PHP_METHOD(Zookeeper, getClientId)
 {
 	const clientid_t *cid;
-	//int status = ZOK;
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "") == FAILURE) {
@@ -491,7 +485,6 @@ static PHP_METHOD(Zookeeper, getAcl)
 {
 	char *path;
 	int path_len;
-	//int status = ZOK;
 	struct ACL_vector aclv;
 	struct Stat stat;
 	zval *stat_info, *acl_info;
@@ -530,7 +523,6 @@ static PHP_METHOD(Zookeeper, setAcl)
 	long version;
 	zval *acl_info;
 	struct ACL_vector aclv;
-	//int status = ZOK;
 	ZK_METHOD_INIT_VARS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sla", &path, &path_len,
@@ -648,7 +640,6 @@ static PHP_METHOD(Zookeeper, addAuth)
 	int scheme_len, cert_len;
 	zend_fcall_info fci = empty_fcall_info;
 	zend_fcall_info_cache fcc = empty_fcall_info_cache;
-	//int status = ZOK;
 	php_cb_data_t *cb_data = NULL;
 	ZK_METHOD_INIT_VARS;
 
