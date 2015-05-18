@@ -47,3 +47,11 @@ run-tests.php
 cscope.out
 .project
 .cproject
+.vagrant
+coverage.info
+tests/*.exp
+tests/*.diff
+tests/*.log
+tests/*.out
+tests/*.php
+tests/*.sh
