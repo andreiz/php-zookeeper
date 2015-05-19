@@ -8,6 +8,6 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-$client->create('/test5', []);
+$client->create('/test5', array());
 --EXPECTF--
 Warning: Zookeeper::create() expects at least %d parameters, %d given in %s on line %d

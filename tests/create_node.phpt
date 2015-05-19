@@ -13,12 +13,12 @@ if ($client->exists('/test6')) {
     $client->delete('/test6');
 }
 
-echo $client->create('/test6', null, [
-    [
+echo $client->create('/test6', null, array(
+    array(
         'perms' => Zookeeper::PERM_ALL,
         'scheme' => 'world',
         'id'    => 'anyone'
-    ]
-], 2);
+    )
+), 2);
 --EXPECTF--
 /test6%d

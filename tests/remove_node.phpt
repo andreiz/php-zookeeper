@@ -8,13 +8,13 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-$client->create('/test5', '', [
-    [
+$client->create('/test5', '', array(
+    array(
         'perms' => Zookeeper::PERM_ALL,
         'scheme' => 'world',
         'id'    => 'anyone'
-    ]
-]);
+    )
+));
 
 echo $client->delete('/test5');
 

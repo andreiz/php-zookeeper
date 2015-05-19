@@ -8,7 +8,7 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->delete([]);
+echo $client->delete(array());
 
 --EXPECTF--
 Warning: Zookeeper::delete() expects parameter %d to be string, array given in %s on line %d
