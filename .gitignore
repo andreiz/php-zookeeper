@@ -55,3 +55,4 @@ tests/*.log
 tests/*.out
 tests/*.php
 tests/*.sh
+reports/
