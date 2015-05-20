@@ -1,5 +1,5 @@
 --TEST--
-Should retrieve true if node exists
+Should retrieve true if node exists with callback
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -15,7 +15,9 @@ $client->create('/test1', '', array(
         'id'    => 'anyone'
     )
 ));
-var_dump(is_array($client->exists('/test1')));
+
+$callback = function($data) { };
+var_dump(is_array($client->exists('/test1', $callback)));
 --CLEAN--
 <?php
 $client = new Zookeeper('localhost:2181');

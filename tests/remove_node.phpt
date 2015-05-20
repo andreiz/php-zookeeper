@@ -1,5 +1,5 @@
 --TEST--
-Should retrieve true if node exists
+Should delete node
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,20 +8,15 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-$client->create('/test1', '', array(
+$client->create('/test5', '', array(
     array(
         'perms' => Zookeeper::PERM_ALL,
         'scheme' => 'world',
         'id'    => 'anyone'
     )
 ));
-var_dump(is_array($client->exists('/test1')));
---CLEAN--
-<?php
-$client = new Zookeeper('localhost:2181');
 
-if ($client->exists('/test1')) {
-    $client->delete('/test1');
-}
+echo $client->delete('/test5');
+
 --EXPECT--
-bool(true)
+1
