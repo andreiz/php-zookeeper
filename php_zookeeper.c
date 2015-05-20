@@ -1273,6 +1273,8 @@ PHP_MINFO_FUNCTION(zookeeper)
 	php_info_print_table_row(2, "libzookeeper version", buf);
 
 	php_info_print_table_end();
+
+	DISPLAY_INI_ENTRIES();
 }
 /* }}} */
 
