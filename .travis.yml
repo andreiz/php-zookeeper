@@ -9,8 +9,15 @@ env:
     - LIBZOOKEEPER_VERSION=3.5.0-alpha
     - LIBZOOKEEPER_VERSION=3.4.6
 
+install:
+    - sudo apt-get install -y lcov
+    - gem install coveralls-lcov
+
 before_script:
     - ./.travis/install_libzookeeper.sh $LIBZOOKEEPER_VERSION
 
 script:
     - ./.travis/build.sh $LIBZOOKEEPER_VERSION
+
+after_success:
+    - coveralls-lcov coverage.info
