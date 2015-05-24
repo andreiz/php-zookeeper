@@ -1,5 +1,5 @@
 --TEST--
-Should get Zookeeper state
+Should retrieve acl
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,6 +8,9 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->getState();
+$acl = $client->getAcl('/zookeeper');
+echo $acl[1][0]['perms'] === Zookeeper::PERM_ALL;
+echo $acl[1][0]['scheme'];
+echo $acl[1][0]['id'];
 --EXPECTF--
-%d
+1worldanyone

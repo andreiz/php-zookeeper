@@ -1,5 +1,5 @@
 --TEST--
-Should get Zookeeper state
+Test should set debug level with invalid parameter
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,6 +8,6 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->getState();
+$client->setDebugLevel(array());
 --EXPECTF--
-%d
+Warning: Zookeeper::setDebugLevel() expects parameter %d to be long, array given in %s on line %d

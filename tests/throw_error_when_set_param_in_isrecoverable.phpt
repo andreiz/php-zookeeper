@@ -1,5 +1,5 @@
 --TEST--
-Should get Zookeeper state
+Throw error when set parameter in isRecoverable method
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,6 +8,6 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->getState();
+$client->isRecoverable('t');
 --EXPECTF--
-%d
+Warning: Zookeeper::isRecoverable() expects exactly %d parameters, %d given in %s on line %d

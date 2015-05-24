@@ -1,5 +1,5 @@
 --TEST--
-Should get Zookeeper state
+Should retrieve bool if is recoverable
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,6 +8,6 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->getState();
---EXPECTF--
-%d
+echo $client->isRecoverable();
+--EXPECT--
+1

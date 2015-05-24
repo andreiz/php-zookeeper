@@ -1,5 +1,5 @@
 --TEST--
-Should get Zookeeper state
+Should retrieve children with invalid node
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,6 +8,6 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->getState();
+$client->getChildren('/zoo');
 --EXPECTF--
-%d
+Warning: Zookeeper::getChildren(): error: no node in %s on line %d
