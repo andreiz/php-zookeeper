@@ -1,5 +1,5 @@
 --TEST--
-Should get Zookeeper state
+Should retrieve children with watcher callback
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,6 +8,6 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->getState();
+echo count($client->getChildren('/zookeeper', function(){}));
 --EXPECTF--
 %d

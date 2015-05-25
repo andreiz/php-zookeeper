@@ -1,5 +1,5 @@
 --TEST--
-Should get Zookeeper state
+Should retrieve error when set invalid node
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,6 +8,6 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->getState();
+$client->getAcl('/zoo');
 --EXPECTF--
-%d
+Warning: Zookeeper::getAcl(): error: no node in %s on line %d

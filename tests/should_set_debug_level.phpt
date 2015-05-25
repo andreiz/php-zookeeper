@@ -1,5 +1,5 @@
 --TEST--
-Should get Zookeeper state
+Test should set debug level
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,6 +8,6 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->getState();
---EXPECTF--
-%d
+echo $client->setDebugLevel(Zookeeper::LOG_LEVEL_WARN);
+--EXPECT--
+1

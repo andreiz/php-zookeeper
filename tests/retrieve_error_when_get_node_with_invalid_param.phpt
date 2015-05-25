@@ -1,5 +1,5 @@
 --TEST--
-Should get Zookeeper state
+Should get Zookeeper node with invalid parameter
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,6 +8,6 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->getState();
+$client->get(array());
 --EXPECTF--
-%d
+Warning: Zookeeper::get() expects parameter %d to be string, array given in %s on line %d

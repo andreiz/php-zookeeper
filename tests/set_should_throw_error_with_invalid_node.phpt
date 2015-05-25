@@ -1,5 +1,5 @@
 --TEST--
-Should get Zookeeper state
+Set should throw error with invalid node
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,6 +8,6 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->getState();
+$client->set('/t', 't');
 --EXPECTF--
-%d
+Warning: Zookeeper::set(): error: no node in %s on line %d

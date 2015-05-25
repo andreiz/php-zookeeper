@@ -1,7 +1,8 @@
 Description
 -----------
 
-[![Build Status](https://api.travis-ci.org/Timandes/php-zookeeper.svg?branch=master)](https://travis-ci.org/Timandes/php-zookeeper)
+[![Build Status](https://img.shields.io/travis/fabiorphp/php-zookeeper/master.svg?style=flat-square)](https://travis-ci.org/fabiorphp/php-zookeeper)
+[![Coveralls](https://img.shields.io/coveralls/fabiorphp/php-zookeeper.svg?style=flat-square)](https://coveralls.io/r/fabiorphp/php-zookeeper?branch=master)
 
 
 This extension uses libzookeeper library to provide API for communicating with

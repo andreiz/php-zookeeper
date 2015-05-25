@@ -1,5 +1,5 @@
 --TEST--
-Should get Zookeeper state
+Should retrieve error when set invalid acl parameter
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,6 +8,6 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->getState();
+$client->getAcl(array());
 --EXPECTF--
-%d
+Warning: Zookeeper::getAcl() expects parameter %d to be string, array given in %s on line %d

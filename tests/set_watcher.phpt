@@ -1,5 +1,5 @@
 --TEST--
-Should get Zookeeper state
+Should set watcher
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,6 +8,11 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->getState();
+
+function callback() {
+
+}
+
+echo gettype($client->setWatcher('callback'));
 --EXPECTF--
-%d
+boolean

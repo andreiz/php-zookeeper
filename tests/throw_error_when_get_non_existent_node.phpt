@@ -1,5 +1,5 @@
 --TEST--
-Should get Zookeeper state
+Throw error when get non existent node
 --SKIPIF--
 <?php
 if (!extension_loaded('zookeeper')) {
@@ -8,6 +8,6 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->getState();
+echo $client->get('/test1');
 --EXPECTF--
-%d
+Warning: Zookeeper::get(): error: no node in %s on line %d
