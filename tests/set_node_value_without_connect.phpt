@@ -8,6 +8,17 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper();
-$client->set('/test1', 'something');
+try {
+    $client->set('/test1', 'something');
+} catch(ZookeeperConnectionException $zce) {
+    if ($zce->getCode() != 5998) {
+        printf("[001] getCode() returned %d, 5998 expected.\n", $zce->getCode());
+    }
+} catch(Exception $e) {
+    printf("[002] Unexpected exception(#%d) was caught: %s.\n", $e->getCode(), $e->getMessage());
+}
+
+printf("OK");
+
 --EXPECTF--
-Warning: Zookeeper::set(): Zookeeper connect was not called in %s on line %d
+OK

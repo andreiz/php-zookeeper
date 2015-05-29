@@ -8,6 +8,17 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-$client->create('/test5', '', array());
+try {
+    $client->create('/test5', '', array());
+} catch (ZookeeperException $ze) {
+    if ($ze->getCode() != Zookeeper::INVALIDACL) {
+        printf("[001] getCode() returned %d, %d expected.\n", $ze->getCode(), Zookeeper::INVALIDACL);
+    }
+} catch (Exception $e) {
+    printf("[002] Unexpected exception(#%d) was caught: %s.\n", $e->getCode(), $e->getMessage());
+}
+
+echo "OK";
+
 --EXPECTF--
-Warning: Zookeeper::create(): error: invalid acl in %s on line %d
+OK

@@ -8,12 +8,21 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-$client->setAcl('/tesa', -1, array(
-    array(
-        'perms'  => Zookeeper::PERM_ALL,
-        'scheme' => 'world',
-        'id'     => 'anyone'
-    )
-));
+try {
+    $client->setAcl('/tesa', -1, array(
+        array(
+            'perms'  => Zookeeper::PERM_ALL,
+            'scheme' => 'world',
+            'id'     => 'anyone'
+        )
+    ));
+} catch (ZookeeperNoNodeException $znne) {
+    if ($znne->getCode() != Zookeeper::NONODE) {
+        printf("[001] getCode() returned %d, %d expected.\n", $ze->getCode(), Zookeeper::NONODE);
+    }
+} catch(Exception $e) {
+    printf("[002] Unexpected exception(#%d) was caught: %s.\n", $e->getCode(), $e->getMessage());
+}
+printf("OK");
 --EXPECTF--
-Warning: Zookeeper::setAcl(): error: no node in %s on line %d
+OK
