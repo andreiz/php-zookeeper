@@ -17,42 +17,46 @@
 
 #include <php.h>
 
+#ifdef ZTS
+#include "TSRM.h"
+#endif
+
 #include "php_zookeeper.h"
 #include "php_zookeeper_exceptions.h"
 
-void php_zk_register_exceptions()
+void php_zk_register_exceptions(TSRMLS_D)
 {
 	zend_class_entry ce;
 
 	INIT_CLASS_ENTRY(ce, "ZookeeperException", NULL);
-	zk_base_exception = zend_register_internal_class_ex(&ce, zend_exception_get_default(), NULL TSRMLS_CC);
+	zk_base_exception = zend_register_internal_class_ex(&ce, zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
 
 	INIT_CLASS_ENTRY(ce, "ZookeeperOperationTimeoutException", NULL);
-	zk_optimeout_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
+	zk_optimeout_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException" TSRMLS_CC);
 
 	INIT_CLASS_ENTRY(ce, "ZookeeperConnectionException", NULL);
-	zk_connection_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
+	zk_connection_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException" TSRMLS_CC);
 
 	INIT_CLASS_ENTRY(ce, "ZookeeperMarshallingException", NULL);
-	zk_marshalling_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
+	zk_marshalling_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException" TSRMLS_CC);
 
 	INIT_CLASS_ENTRY(ce, "ZookeeperAuthenticationException", NULL);
-	zk_auth_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
+	zk_auth_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException" TSRMLS_CC);
 
 	INIT_CLASS_ENTRY(ce, "ZookeeperSessionException", NULL);
-	zk_session_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
+	zk_session_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException" TSRMLS_CC);
 
 	INIT_CLASS_ENTRY(ce, "ZookeeperNoNodeException", NULL);
-	zk_nonode_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException");
+	zk_nonode_exception = zend_register_internal_class_ex(&ce, zk_base_exception, "ZookeeperException" TSRMLS_CC);
 }
 
-zend_class_entry * php_zk_get_exception_with_message(zend_class_entry *ce, char *message)
+zend_class_entry * php_zk_get_exception_with_message(zend_class_entry *ce, char *message TSRMLS_DC)
 {
 	zend_declare_property_string(ce, "message", strlen("message"), message, ZEND_ACC_PUBLIC TSRMLS_CC);
 	return ce;
 }
 
-void php_zk_throw_exception(int zk_status)
+void php_zk_throw_exception(int zk_status TSRMLS_DC)
 {
 	zend_class_entry *ce;
 	char *message = NULL;
@@ -95,6 +99,6 @@ void php_zk_throw_exception(int zk_status)
 		message = (char *)zerror(zk_status);
 	}
 
-	zend_throw_exception(php_zk_get_exception_with_message(ce, message), NULL, zk_status);
+	zend_throw_exception(php_zk_get_exception_with_message(ce, message TSRMLS_CC), NULL, zk_status TSRMLS_CC);
 	return;
 }

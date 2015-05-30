@@ -31,11 +31,11 @@ zend_class_entry *zk_nonode_exception;
 /**
  * register exceptions
  */
-void php_zk_register_exceptions();
-zend_class_entry * php_zk_get_exception_with_message(zend_class_entry *ce, char *message);
+void php_zk_register_exceptions(TSRMLS_D);
+zend_class_entry * php_zk_get_exception_with_message(zend_class_entry *ce, char *message TSRMLS_DC);
 /**
  * throw exception according to status
  */
-void php_zk_throw_exception(int zk_status);
+void php_zk_throw_exception(int zk_status TSRMLS_DC);
 
 #endif  /* PHP_ZOOKEEPER_EXCEPTIONS */
