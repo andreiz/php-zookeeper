@@ -11,12 +11,8 @@ $client = new Zookeeper('localhost:2181');
 try {
     $client->getChildren('/zoo');
 } catch (ZookeeperNoNodeException $znne) {
-    if ($znne->getCode() != Zookeeper::NONODE) {
-        printf("[001] getCode() returned %d, %d expected.\n", $ze->getCode(), Zookeeper::NONODE);
-    }
-} catch(Exception $e) {
-    printf("[002] Unexpected exception(#%d) was caught: %s.\n", $e->getCode(), $e->getMessage());
+    printf("%s\n%d", $znne->getMessage(), $znne->getCode());
 }
-printf("OK");
 --EXPECTF--
-OK
+no node
+-101

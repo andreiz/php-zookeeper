@@ -11,14 +11,8 @@ $client = new Zookeeper('localhost:2181');
 try {
     $client->create('/test5', '', array());
 } catch (ZookeeperException $ze) {
-    if ($ze->getCode() != Zookeeper::INVALIDACL) {
-        printf("[001] getCode() returned %d, %d expected.\n", $ze->getCode(), Zookeeper::INVALIDACL);
-    }
-} catch (Exception $e) {
-    printf("[002] Unexpected exception(#%d) was caught: %s.\n", $e->getCode(), $e->getMessage());
+    printf("%s\n%d", $ze->getMessage(), $ze->getCode());
 }
-
-echo "OK";
-
 --EXPECTF--
-OK
+invalid acl
+-114

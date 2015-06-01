@@ -11,14 +11,8 @@ $client = new Zookeeper();
 try {
     $client->set('/test1', 'something');
 } catch(ZookeeperConnectionException $zce) {
-    if ($zce->getCode() != 5998) {
-        printf("[001] getCode() returned %d, 5998 expected.\n", $zce->getCode());
-    }
-} catch(Exception $e) {
-    printf("[002] Unexpected exception(#%d) was caught: %s.\n", $e->getCode(), $e->getMessage());
+    printf("%s\n%d", $zce->getMessage(), $zce->getCode());
 }
-
-printf("OK");
-
 --EXPECTF--
-OK
+Zookeeper->connect() was not called
+5998
