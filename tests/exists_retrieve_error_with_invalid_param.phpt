@@ -8,6 +8,11 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-$client->exists(10);
+try {
+    $client->exists(10);
+} catch (ZookeeperException $ze) {
+    printf("%s\n%d", $ze->getMessage(), $ze->getCode());
+}
 --EXPECTF--
-Warning: Zookeeper::exists(): error: bad arguments in %s on line %d
+bad arguments
+-8

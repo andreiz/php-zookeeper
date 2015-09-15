@@ -8,6 +8,11 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-$client->create('/test5', '', array());
+try {
+    $client->create('/test5', '', array());
+} catch (ZookeeperException $ze) {
+    printf("%s\n%d", $ze->getMessage(), $ze->getCode());
+}
 --EXPECTF--
-Warning: Zookeeper::create(): error: invalid acl in %s on line %d
+invalid acl
+-114

@@ -8,7 +8,11 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-echo $client->delete('/10');
-
+try {
+    echo $client->delete('/10');
+} catch (ZookeeperNoNodeException $znne) {
+    printf("%s\n%d", $znne->getMessage(), $znne->getCode());
+}
 --EXPECTF--
-Warning: Zookeeper::delete(): error: no node in %s on line %d
+no node
+-101
