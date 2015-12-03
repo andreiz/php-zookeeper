@@ -96,7 +96,7 @@ class Zookeeper {
 
 	public function isRecoverable( ) {}
 
-	public function setLogFile( $file ) {} // TODO: might be able to set a stream like php://stderr or something
+	public function setLogStream( $file ) {} // TODO: might be able to set a stream like php://stderr or something
 
 	public function getResultMessage( ) {}
 
