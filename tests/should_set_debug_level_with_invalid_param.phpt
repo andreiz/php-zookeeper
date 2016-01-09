@@ -10,4 +10,4 @@ if (!extension_loaded('zookeeper')) {
 $client = new Zookeeper('localhost:2181');
 $client->setDebugLevel(array());
 --EXPECTF--
-Warning: Zookeeper::setDebugLevel() expects parameter %d to be long, array given in %s on line %d
+Warning: Zookeeper::setDebugLevel() expects parameter %d to be %s, array given in %s on line %d
