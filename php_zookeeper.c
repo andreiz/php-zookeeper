@@ -411,7 +411,9 @@ static PHP_METHOD(Zookeeper, get)
 	}
 
 	if (stat_info) {
-		zval_dtor(stat_info);
+#ifdef ZEND_ENGINE_3
+		ZVAL_DEREF(stat_info);
+#endif
 		php_stat_to_array(&stat, stat_info);
 	}
 
