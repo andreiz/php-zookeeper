@@ -1076,7 +1076,13 @@ static void php_aclv_destroy(struct ACL_vector *aclv)
 
 static void php_stat_to_array(const struct Stat *stat, zval *array)
 {
+	if( !array ) {
+		return;
+	}
 	if( Z_TYPE_P(array) != IS_ARRAY ) {
+#ifdef ZEND_ENGINE_3
+		zval_ptr_dtor(array);
+#endif
 		array_init(array);
 	}
 
