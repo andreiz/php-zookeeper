@@ -19,8 +19,8 @@ $zk = new Zookeeper('localhost:2181');
 $zk->create($path, null, $acls);
 $stats = array();
 $zk->get($path, NULL, $stats);
-var_dump(is_array($stats));
-//$zk->delete($path);
+var_dump($stats['dataLength']);
+$zk->delete($path);
 
 --EXPECT--
-bool(true)
+int(0)

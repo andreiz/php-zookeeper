@@ -336,8 +336,14 @@ static PHP_METHOD(Zookeeper, get)
 		length = max_size;
 	}
 
-	if (length <= 0) /* znode carries a NULL */
+	if (length <= 0) {/* znode carries a NULL */
+		if (stat_info) {
+			zval_dtor(stat_info);
+			php_stat_to_array(&stat, stat_info);
+		}
+
 		RETURN_NULL();
+	}
 
 	buffer = emalloc (length+1);
 	status = zoo_wget(i_obj->zk, path, (fci.size != 0) ? php_zk_watcher_marshal : NULL,
