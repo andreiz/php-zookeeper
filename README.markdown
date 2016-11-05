@@ -1,7 +1,7 @@
 Description
 -----------
 
-[![Build Status](https://img.shields.io/travis/andreiz/php-zookeeper/master.svg?style=flat-square)](https://travis-ci.org/andreiz/php-zookeeper)
+[![Build Status](https://img.shields.io/travis/php-zookeeper/php-zookeeper/master.svg?style=flat-square)](https://travis-ci.org/andreiz/php-zookeeper)
 [![Coveralls](https://img.shields.io/coveralls/andreiz/php-zookeeper.svg?style=flat-square)](https://coveralls.io/r/andreiz/php-zookeeper?branch=master)
 
 This extension uses libzookeeper library to provide API for communicating with
@@ -13,5 +13,6 @@ providing group services.
 
 Resources
 ---------
- * [zookeeper](http://hadoop.apache.org/zookeeper/)
+ * [zookeeper](https://zookeeper.apache.org/)
  * [recipes](https://github.com/Gutza/php-zookeeper-recipes)
+ * [admin](https://github.com/Timandes/zookeeper-admin)
