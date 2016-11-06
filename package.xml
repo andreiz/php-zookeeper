@@ -15,21 +15,33 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <email>andrei@php.net</email>
   <active>yes</active>
  </lead>
- <date>2012-01-13</date>
+ <lead>
+  <name>Timandes White</name>
+  <user>timandes</user>
+  <email>timandes@php.net</email>
+  <active>yes</active>
+ </lead>
+ <date>2016-11-07</date>
  <version>
-  <release>0.2.1</release>
-  <api>0.2.0</api>
+  <release>0.2.3</release>
+  <api>0.2.3</api>
  </version>
  <stability>
-  <release>beta</release>
+  <release>stable</release>
   <api>beta</api>
  </stability>
  <license uri="http://www.php.net/license">PHP</license>
  <notes>
-- Package up missed source files
+- PHP 5.4 compatibility
+- Sample PHP class for using zookeeper
+- Fix NOTCONNECTED_STATE issue
+- Various other fixes
  </notes>
  <contents>
   <dir name="/">
+   <dir name="examples">
+    <file role='doc' name='Zookeeper_Example.php'/>
+   </dir>
    <file role='doc' name='README.markdown'/>
    <file role='doc' name='CREDITS'/>
    <file role='doc' name='LICENSE'/>
@@ -60,6 +72,37 @@ http://pear.php.net/dtd/package-2.0.xsd">
  <providesextension>zookeeper</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability><release>stable</release><api>beta</api></stability>
+   <version><release>0.2.3</release><api>0.2.3</api></version>
+   <date>2016-11-07</date>
+   <notes><![CDATA[
+Bugs:
+- Fix 'Node with null data cause php segfault at Zookeeper::get($path)' (AZ Issue #21)
+- Fix 'Stat is null when get a node which holds null data' (AZ Issue #29)
+- Fix 'Wrong type conversion in function call' (Thanks to Dmitry Faleychik<fadimko@gmail.com>, AZ PR #42)
+- Fix AZ PR #44 (Thanks to jeff.tang<likeytom@gmail.com>)
+- Fix AZ Issue #27 (--with-libdir not honoured, Thanks to Remi Collet)
+
+Improvements:
+- Respect null's when passed as values during set(), create(), and get() (Thanks to Ryan Uber<ru@ryanuber.com>, AZ PR #22)
+- Make extension compatible with Zookeeper 3.5.0alpha (Thanks to Ryan Uber<ru@ryanuber.com>, AZ PR #28 N #48)
+- Display ini entries in `phpinfo()`
+   ]]></notes>
+  </release>
+
+  <release>
+   <stability><release>beta</release><api>beta</api></stability>
+   <version><release>0.2.2</release><api>0.2.2</api></version>
+   <date>2013-07-30</date>
+   <notes>
+- PHP 5.4 compatibility
+- Sample PHP class for using zookeeper
+- Fix NOTCONNECTED_STATE issue
+- Various other fixes
+   </notes>
+  </release>
+
   <release>
    <stability><release>beta</release><api>beta</api></stability>
    <version><release>0.2.1</release><api>0.2.0</api></version>
