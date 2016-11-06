@@ -219,8 +219,10 @@ PS_READ_FUNC(zookeeper)
 		retry_count++;
 	} while (status == ZCONNECTIONLOSS && retry_count--);
 
-	if (status != ZOK) {
+	if (status == ZNONODE) {
 		goto error;
+	} else if (status != ZOK) {
+		return FAILURE;
 	}
 
 	expiration_time = (int64_t) (SG(global_request_time) - PS(gc_maxlifetime)) * 1000;
@@ -246,7 +248,7 @@ PS_READ_FUNC(zookeeper)
 
 	if (status != ZOK) {
 		efree(rbuf);
-		goto error;
+		return FAILURE;
 	}
 
 #ifdef ZEND_ENGINE_3
@@ -265,7 +267,7 @@ error:
 	*val    = NULL;
 	*vallen = 0;
 #endif
-	return FAILURE;
+	return SUCCESS; //FAILURE;
 #undef SESSKEY
 }
 /* }}} */
