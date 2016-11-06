@@ -373,6 +373,12 @@ static PHP_METHOD(Zookeeper, get)
 
 	ZK_METHOD_FETCH_OBJECT;
 
+#ifdef ZEND_ENGINE_3
+    if (stat_info) {
+        ZVAL_DEREF(stat_info);
+    }
+#endif
+
 	if (fci.size != 0) {
 		cb_data = php_cb_data_new(&fci, &fcc, 1 TSRMLS_CC);
 	}
@@ -392,7 +398,6 @@ static PHP_METHOD(Zookeeper, get)
 
 	if (length <= 0) {/* znode carries a NULL */
 		if (stat_info) {
-			zval_dtor(stat_info);
 			php_stat_to_array(&stat, stat_info);
 		}
 
@@ -417,9 +422,6 @@ static PHP_METHOD(Zookeeper, get)
 	}
 
 	if (stat_info) {
-#ifdef ZEND_ENGINE_3
-		ZVAL_DEREF(stat_info);
-#endif
 		php_stat_to_array(&stat, stat_info);
 	}
 
