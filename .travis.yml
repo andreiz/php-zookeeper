@@ -6,8 +6,8 @@ php:
     - 5.3
 
 env:
-    - LIBZOOKEEPER_VERSION=3.5.0-alpha
-    - LIBZOOKEEPER_VERSION=3.4.6
+    - LIBZOOKEEPER_VERSION=3.5.2-alpha
+    - LIBZOOKEEPER_VERSION=3.4.8
 
 install:
     - sudo apt-get install -y lcov
