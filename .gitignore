@@ -2,7 +2,9 @@
 *.lo
 *.la
 .deps
+.idea
 .libs
+CMakeLists.txt
 Makefile
 Makefile.fragments
 Makefile.global
@@ -55,4 +57,5 @@ tests/*.log
 tests/*.out
 tests/*.php
 tests/*.sh
+tmp-php.ini
 reports/
