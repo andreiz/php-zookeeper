@@ -1,5 +1,12 @@
 zookeeper extension changelog
 
+Version 0.3.0
+-------------
+	Improvements:
+	* Support PHP-7
+	* Support Exceptions
+
+
 Version 0.2.3
 -------------
 	Bugs:
