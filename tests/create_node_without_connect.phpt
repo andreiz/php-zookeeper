@@ -8,13 +8,17 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper();
-
-$client->create('/test6', null, array(
-    array(
-        'perms' => Zookeeper::PERM_ALL,
-        'scheme' => 'world',
-        'id'    => 'anyone'
-    )
-));
+try {
+    $client->create('/test6', null, array(
+        array(
+            'perms' => Zookeeper::PERM_ALL,
+            'scheme' => 'world',
+            'id'    => 'anyone'
+        )
+    ));
+} catch(ZookeeperConnectionException $zce) {
+    printf("%s\n%d", $zce->getMessage(), $zce->getCode());
+}
 --EXPECTF--
-Warning: Zookeeper::create(): Zookeeper connect was not called in %s on line %d
+Zookeeper->connect() was not called
+5998

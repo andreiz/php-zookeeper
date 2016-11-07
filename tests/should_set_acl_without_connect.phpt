@@ -8,12 +8,17 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper();
-$client->setAcl('/tes', -1, array(
-    array(
-        'perms'  => Zookeeper::PERM_ALL,
-        'scheme' => 'world',
-        'id'     => 'anyone'
-    )
-));
+try {
+    $client->setAcl('/tes', -1, array(
+        array(
+            'perms'  => Zookeeper::PERM_ALL,
+            'scheme' => 'world',
+            'id'     => 'anyone'
+        )
+    ));
+} catch(ZookeeperConnectionException $zce) {
+    printf("%s\n%d", $zce->getMessage(), $zce->getCode());
+}
 --EXPECTF--
-Warning: Zookeeper::setAcl(): Zookeeper connect was not called in %s on line %d
+Zookeeper->connect() was not called
+5998

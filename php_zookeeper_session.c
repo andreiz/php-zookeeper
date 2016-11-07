@@ -15,10 +15,12 @@
   +----------------------------------------------------------------------+
 */
 
+#include "SAPI.h"
+
+#include "php5to7.h"
 #include "php_zookeeper.h"
 #include "php_zookeeper_private.h"
 #include "php_zookeeper_session.h"
-#include "SAPI.h"
 
 #ifdef HAVE_ZOOKEEPER_SESSION
 
@@ -29,6 +31,26 @@
 #define PHP_ZK_SESS_DEFAULT_LOCK_WAIT 150000
 
 #define PHP_ZK_SESS_LOCK_EXPIRATION 30
+
+#ifndef ZEND_ENGINE_3
+typedef zend_rsrc_list_entry zend_resource;
+static inline void *zend_hash_str_update_mem(HashTable *ht, const char *str, size_t len, void *pData, size_t size)
+{
+	void *pDest;
+	if (zend_hash_update(ht, str, len, pData, size, &pDest) == FAILURE) {
+		return NULL;
+	}
+	return pDest;
+}
+static inline void *zend_hash_str_find_ptr(const HashTable *ht, const char *str, size_t len)
+{
+	void *pData;
+	if (zend_hash_find(ht, str, len, &pData) == FAILURE) {
+		return NULL;
+	}
+	return pData;
+}
+#endif
 
 ps_module ps_mod_zookeeper = {
 	PS_MOD(zookeeper)
@@ -75,16 +97,19 @@ static php_zookeeper_session *php_zookeeper_session_init(char *save_path TSRMLS_
 */
 static php_zookeeper_session *php_zookeeper_session_get(char *save_path TSRMLS_DC)
 {
-	php_zookeeper_session *session;
+	php_zookeeper_session *session = NULL;
 
 	char *plist_key;
 	int plist_key_len;
-	zend_rsrc_list_entry le, *le_p = NULL;
+	zend_resource le, *le_p = NULL;
 
 	plist_key_len  = spprintf(&plist_key, 0, "zk-conn:[%s]", save_path);
+#ifndef ZEND_ENGINE_3
 	plist_key_len += 1;
+#endif
 
-	if (zend_hash_find(&EG(persistent_list), plist_key, plist_key_len, (void *)&le_p) == SUCCESS) {
+	le_p = zend_hash_str_find_ptr(&EG(persistent_list), plist_key, plist_key_len);
+	if (le_p) {
 		if (le_p->type == php_zookeeper_get_connection_le()) {
 			efree(plist_key);
 			return (php_zookeeper_session *) le_p->ptr;
@@ -95,12 +120,13 @@ static php_zookeeper_session *php_zookeeper_session_get(char *save_path TSRMLS_D
 	le.type = php_zookeeper_get_connection_le();
 	le.ptr  = session;
 
-	if (zend_hash_update(&EG(persistent_list), (char *)plist_key, plist_key_len, (void *)&le, sizeof(le), NULL) == FAILURE) {
+	if (!zend_hash_str_update_mem(&EG(persistent_list), (char *)plist_key, plist_key_len, (void *)&le, sizeof(le))) {
 		php_error_docref(NULL TSRMLS_CC, E_ERROR, "Could not register persistent entry for the zk handle");
 	}
 
 	efree(plist_key);
 	session->is_locked = 0;
+
 	return session;
 }
 /* }}} */
@@ -167,20 +193,27 @@ static zend_bool php_zookeeper_sess_lock(php_zookeeper_session *session, const c
 */
 PS_READ_FUNC(zookeeper)
 {
+#ifdef ZEND_ENGINE_3
+#define SESSKEY ZSTR_VAL(key)
+#else
+#define SESSKEY key
+#endif
 	ZK_SESS_DATA;
 	int status, path_len;
 	struct Stat stat;
 	int retry_count;
 	int64_t expiration_time;
+	char * rbuf;
+	int rbuf_len;
 
 	if (ZK_G(session_lock)) {
-		if (!php_zookeeper_sess_lock(session, key TSRMLS_CC)) {
+		if (!php_zookeeper_sess_lock(session, SESSKEY TSRMLS_CC)) {
 			php_error_docref(NULL TSRMLS_CC, E_ERROR, "Failed to create session mutex");
 			return FAILURE;
 		}
 	}
 
-	path_len = snprintf(session->path, 512, "%s/%s", PHP_ZK_PARENT_NODE, key);
+	path_len = snprintf(session->path, 512, "%s/%s", PHP_ZK_PARENT_NODE, SESSKEY);
 
 	retry_count = 3;
 	do {
@@ -188,9 +221,9 @@ PS_READ_FUNC(zookeeper)
 		retry_count++;
 	} while (status == ZCONNECTIONLOSS && retry_count--);
 
-	if (status != ZOK) {
-		*val    = NULL;
-		*vallen = 0;
+	if (status == ZNONODE) {
+		goto error;
+	} else if (status != ZOK) {
 		return FAILURE;
 	}
 
@@ -203,28 +236,41 @@ PS_READ_FUNC(zookeeper)
 			status = zoo_delete(session->zk, session->path, -1);
 			retry_count++;
 		} while (status == ZCONNECTIONLOSS && retry_count--);
-
-		*val    = NULL;
-		*vallen = 0;
-		return FAILURE;
+		goto error;
 	}
 
-	*val    = emalloc(stat.dataLength);
-	*vallen = stat.dataLength;
+	rbuf    = emalloc(stat.dataLength);
+	rbuf_len = stat.dataLength;
 
 	retry_count = 3;
 	do {
-		status = zoo_get(session->zk, session->path, 0, *val, vallen, &stat);
+		status = zoo_get(session->zk, session->path, 0, rbuf, &rbuf_len, &stat);
 		retry_count++;
 	} while (status == ZCONNECTIONLOSS && retry_count--);
 
 	if (status != ZOK) {
-		efree(*val);
-		*val    = NULL;
-		*vallen = 0;
+		efree(rbuf);
 		return FAILURE;
 	}
+
+#ifdef ZEND_ENGINE_3
+	*val = zend_string_init(rbuf, rbuf_len, 0);
+	efree(rbuf);
+#else
+	*val = rbuf;
+	*vallen = rbuf_len;
+#endif
+
 	return SUCCESS;
+error:
+#ifdef ZEND_ENGINE_3
+	*val = ZSTR_EMPTY_ALLOC();
+#else
+	*val    = NULL;
+	*vallen = 0;
+#endif
+	return SUCCESS; //FAILURE;
+#undef SESSKEY
 }
 /* }}} */
 
@@ -232,6 +278,14 @@ PS_READ_FUNC(zookeeper)
 */
 PS_WRITE_FUNC(zookeeper)
 {
+#ifdef ZEND_ENGINE_3
+#define WBUF ZSTR_VAL(val)
+#define WBUFLEN ZSTR_LEN(val)
+#else
+#define WBUF val
+#define WBUFLEN vallen
+#endif
+
 	ZK_SESS_DATA;
 	int status, retry_count;
 	struct Stat stat;
@@ -245,14 +299,18 @@ PS_WRITE_FUNC(zookeeper)
 	retry_count = 3;
 	do {
 		if (status != ZOK) {
-			status = zoo_create(session->zk, session->path, val, vallen, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+			status = zoo_create(session->zk, session->path, WBUF, WBUFLEN, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
 		} else {
-			status = zoo_set(session->zk, session->path, val, vallen, -1);
+			status = zoo_set(session->zk, session->path, WBUF, WBUFLEN, -1);
 		}
 		retry_count++;
 	} while (status == ZCONNECTIONLOSS && retry_count--);
 
+
 	return (status == ZOK) ? SUCCESS : FAILURE;
+
+#undef WBUF
+#undef WBUFLEN
 }
 /* }}} */
 
