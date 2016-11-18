@@ -21,29 +21,29 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <email>timandes@php.net</email>
   <active>yes</active>
  </lead>
- <date>2016-11-07</date>
+ <developer>
+  <name>John Boehr</name>
+  <user>jbboehr</user>
+  <email>jbboehr@gmail.com</email>
+  <active>yes</active>
+ </developer>
+ <date>2016-11-18</date>
  <version>
-  <release>0.2.3</release>
-  <api>0.2.3</api>
+  <release>0.3.0</release>
+  <api>0.3.0</api>
  </version>
  <stability>
-  <release>stable</release>
-  <api>beta</api>
+  <release>alpha</release>
+  <api>alpha</api>
  </stability>
  <license uri="http://www.php.net/license">PHP</license>
  <notes><![CDATA[
 Bugs:
-- Fix 'Node with null data cause php segfault at Zookeeper::get($path)' (AZ Issue #21)
-- Fix 'Stat is null when get a node which holds null data' (AZ Issue #29)
-- Fix 'Wrong type conversion in function call' (Thanks to Dmitry Faleychik<fadimko@gmail.com>, AZ PR #42)
-- Fix AZ PR #44 (Thanks to jeff.tang<likeytom@gmail.com>)
-- Fix AZ Issue #27 (--with-libdir not honoured, Thanks to Remi Collet)
-- Return null after zoo_exists returning 0-length directly (AZ PR #45)
+- Fix session warning with PHP 7.1 (Issue #4)
 
 Improvements:
-- Respect null's when passed as values during set(), create(), and get() (Thanks to Ryan Uber<ru@ryanuber.com>, AZ PR #22)
-- Make extension compatible with Zookeeper 3.5.0alpha (Thanks to Ryan Uber<ru@ryanuber.com>, AZ PR #28 N #48)
-- Display ini entries in `phpinfo()`
+- Support PHP-7 (PR #1)
+- Support exceptions (PR #2)
    ]]></notes>
  <contents>
   <dir name="/">
@@ -63,14 +63,16 @@ Improvements:
    <file role='src' name='php_zookeeper_session.h'/>
    <file role='src' name='zoo_lock.c'/>
    <file role='src' name='zoo_lock.h'/>
+   <file role='src' name='php5to7.h'/>
+   <file role='src' name='php_zookeeper_exceptions.c'/>
+   <file role='src' name='php_zookeeper_exceptions.h'/>
   </dir> <!-- / -->
  </contents>
  <dependencies>
   <required>
    <php>
     <min>5.2.0</min>
-    <max>6.0.0</max>
-    <exclude>6.0.0</exclude>
+    <max>7.1.0</max>
    </php>
    <pearinstaller>
     <min>1.4.0b1</min>
@@ -80,6 +82,20 @@ Improvements:
  <providesextension>zookeeper</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability><release>alpha</release><api>alpha</api></stability>
+   <version><release>0.3.0</release><api>0.3.0</api></version>
+   <date>2016-11-18</date>
+   <notes><![CDATA[
+Bugs:
+- Fix session warning with PHP 7.1 (Issue #4)
+
+Improvements:
+- Support PHP-7 (PR #1)
+- Support exceptions (PR #2)
+   ]]></notes>
+  </release>
+
   <release>
    <stability><release>stable</release><api>beta</api></stability>
    <version><release>0.2.3</release><api>0.2.3</api></version>
