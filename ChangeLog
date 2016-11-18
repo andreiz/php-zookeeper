@@ -2,9 +2,12 @@ zookeeper extension changelog
 
 Version 0.3.0
 -------------
+	Bugs:
+	* Fix session warning with PHP 7.1 (Issue #4)
+
 	Improvements:
-	* Support PHP-7
-	* Support Exceptions
+	* Support PHP-7 (PR #1)
+	* Support exceptions (PR #2)
 
 
 Version 0.2.3
