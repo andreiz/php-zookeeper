@@ -31,12 +31,20 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <api>beta</api>
  </stability>
  <license uri="http://www.php.net/license">PHP</license>
- <notes>
-- PHP 5.4 compatibility
-- Sample PHP class for using zookeeper
-- Fix NOTCONNECTED_STATE issue
-- Various other fixes
- </notes>
+ <notes><![CDATA[
+Bugs:
+- Fix 'Node with null data cause php segfault at Zookeeper::get($path)' (AZ Issue #21)
+- Fix 'Stat is null when get a node which holds null data' (AZ Issue #29)
+- Fix 'Wrong type conversion in function call' (Thanks to Dmitry Faleychik<fadimko@gmail.com>, AZ PR #42)
+- Fix AZ PR #44 (Thanks to jeff.tang<likeytom@gmail.com>)
+- Fix AZ Issue #27 (--with-libdir not honoured, Thanks to Remi Collet)
+- Return null after zoo_exists returning 0-length directly (AZ PR #45)
+
+Improvements:
+- Respect null's when passed as values during set(), create(), and get() (Thanks to Ryan Uber<ru@ryanuber.com>, AZ PR #22)
+- Make extension compatible with Zookeeper 3.5.0alpha (Thanks to Ryan Uber<ru@ryanuber.com>, AZ PR #28 N #48)
+- Display ini entries in `phpinfo()`
+   ]]></notes>
  <contents>
   <dir name="/">
    <dir name="examples">
@@ -83,6 +91,7 @@ Bugs:
 - Fix 'Wrong type conversion in function call' (Thanks to Dmitry Faleychik<fadimko@gmail.com>, AZ PR #42)
 - Fix AZ PR #44 (Thanks to jeff.tang<likeytom@gmail.com>)
 - Fix AZ Issue #27 (--with-libdir not honoured, Thanks to Remi Collet)
+- Return null after zoo_exists returning 0-length directly (AZ PR #45)
 
 Improvements:
 - Respect null's when passed as values during set(), create(), and get() (Thanks to Ryan Uber<ru@ryanuber.com>, AZ PR #22)
