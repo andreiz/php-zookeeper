@@ -292,6 +292,7 @@ static PHP_METHOD(Zookeeper, getChildren)
 	for (i = 0; i < strings.count; i++) {
 		add_next_index_string(return_value, strings.data[i], 1);
 	}
+    deallocate_String_vector(&strings);
 }
 /* }}} */
 
