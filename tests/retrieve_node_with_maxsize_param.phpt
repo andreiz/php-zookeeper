@@ -18,7 +18,10 @@ $client->create('/test1', 'something', array(
 
 $stat = '';
 echo $client->get('/test1', null, $stat, 10);
+echo "\n";
+var_dump(gettype($stat));
 
 $client->delete('/test1');
 --EXPECT--
 something
+string(5) "array"

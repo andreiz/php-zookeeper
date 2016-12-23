@@ -8,6 +8,11 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper('localhost:2181');
-$client->set('/t', 't');
+try {
+    $client->set('/t', 't');
+} catch (ZookeeperNoNodeException $znne) {
+    printf("%s\n%d", $znne->getMessage(), $znne->getCode());
+}
 --EXPECTF--
-Warning: Zookeeper::set(): error: no node in %s on line %d
+no node
+-101

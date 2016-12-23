@@ -1,5 +1,30 @@
 zookeeper extension changelog
 
+Version 0.3.0
+-------------
+	Bugs:
+	* Fix session warning with PHP 7.1 (Issue #4)
+
+	Improvements:
+	* Support PHP-7 (PR #1)
+	* Support exceptions (PR #2)
+
+
+Version 0.2.3
+-------------
+	Bugs:
+	* Fix 'Node with null data cause php segfault at Zookeeper::get($path)' (AZ Issue #21)
+	* Fix 'Stat is null when get a node which holds null data' (AZ Issue #29)
+	* Fix 'Wrong type conversion in function call' (Thanks to Dmitry Faleychik<fadimko@gmail.com>, AZ PR #42)
+	* Fix AZ PR #44 (Thanks to jeff.tang<likeytom@gmail.com>)
+	* Fix AZ Issue #27 (--with-libdir not honoured, Thanks to Remi Collet)
+
+	Improvements:
+	* Respect null's when passed as values during set(), create(), and get() (Thanks to Ryan Uber<ru@ryanuber.com>, AZ PR #22)
+	* Make extension compatible with Zookeeper 3.5.0alpha (Thanks to Ryan Uber<ru@ryanuber.com>, AZ PR #28 N #48)
+	* Display ini entries in `phpinfo()`
+
+
 Version 0.2.2
 -------------
 	* PHP 5.4 compatibility
@@ -10,8 +35,14 @@ Version 0.2.2
 Version 0.2.1
 -------------
 
+	* Package up missed source files
+
 Version 0.2.0
 -------------
+
+	* Added session handler support
+	* Added connect() and delete methods
+	* Bug fixes
 
 Version 0.1.0
 -------------

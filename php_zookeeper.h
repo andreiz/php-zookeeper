@@ -48,7 +48,7 @@ PHP_MSHUTDOWN_FUNCTION(zookeeper);
 PHP_RSHUTDOWN_FUNCTION(zookeeper);
 PHP_MINFO_FUNCTION(zookeeper);
 
-#define PHP_ZOOKEEPER_VERSION "0.2.3"
+#define PHP_ZOOKEEPER_VERSION "0.3.0"
 
 ZEND_EXTERN_MODULE_GLOBALS(php_zookeeper)
 
@@ -68,6 +68,9 @@ extern ps_module ps_mod_zookeeper;
 PS_FUNCS(zookeeper);
 
 #endif /* HAVE_ZOOKEEPER_SESSION */
+
+#define PHPZK_CONNECTION_FAILURE 5999
+#define PHPZK_CONNECT_NOT_CALLED 5998
 
 #endif /* PHP_ZOOKEEPER_H */
 

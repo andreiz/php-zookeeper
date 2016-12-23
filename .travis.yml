@@ -1,16 +1,24 @@
 language: php
 php:
+    - 7.1
+    - 7.0
     - 5.6
     - 5.5
     - 5.4
     - 5.3
 
 env:
-    - LIBZOOKEEPER_VERSION=3.5.0-alpha
-    - LIBZOOKEEPER_VERSION=3.4.6
+    - LIBZOOKEEPER_VERSION=3.5.2-alpha
+    - LIBZOOKEEPER_VERSION=3.4.8
+
+addons:
+  apt:
+    packages:
+      - lcov
+
+sudo: false
 
 install:
-    - sudo apt-get install -y lcov
     - gem install coveralls-lcov
 
 before_script:
@@ -21,3 +29,4 @@ script:
 
 after_success:
     - coveralls-lcov coverage.info
+

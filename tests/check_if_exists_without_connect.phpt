@@ -8,6 +8,11 @@ if (!extension_loaded('zookeeper')) {
 --FILE--
 <?php
 $client = new Zookeeper();
-$client->exists('/test1');
+try {
+    $client->exists('/test1');
+} catch(ZookeeperConnectionException $zce) {
+    printf("%s\n%d", $zce->getMessage(), $zce->getCode());
+}
 --EXPECTF--
-Warning: Zookeeper::exists(): Zookeeper connect was not called in %s on line %d
+Zookeeper->connect() was not called
+5998
