@@ -1,6 +1,6 @@
 Description
 -----------
-NOTE: this extension is now being maintained at https://github.com/php-zookeeper/php-zookeeper
+NOTE: this extension is now being maintained by [php-zookeeper team](https://github.com/php-zookeeper/php-zookeeper).
 
 [![Build Status](https://img.shields.io/travis/andreiz/php-zookeeper/master.svg?style=flat-square)](https://travis-ci.org/andreiz/php-zookeeper)
 [![Coveralls](https://img.shields.io/coveralls/andreiz/php-zookeeper.svg?style=flat-square)](https://coveralls.io/r/andreiz/php-zookeeper?branch=master)
