@@ -155,30 +155,35 @@ class Zookeeper_Example
 	 		return $this->zookeeper->delete($path);
 	 	}
 	 }
-     
-    /**
+	 
+	/**
 	 * Wath a given path
 	 * @param string $path the path to node
 	 * @param callable $callback callback function
 	 * @return string|null
 	 */
-	public function watch($path, $callback)
-	{
+	public function watch($path, $callback){
 		if (!is_callable($callback)) {
 			return null;
 		}
-		
+
+		$ret = null;
+
 		if ($this->zookeeper->exists($path)) {
 			if (!isset($this->callback[$path])) {
 				$this->callback[$path] = array();
+				$ret				   = $this->zookeeper->get($path, array($this, 'watchCallback'));
+			} else {
+				$ret = $this->get($path);
 			}
 			if (!in_array($callback, $this->callback[$path])) {
 				$this->callback[$path][] = $callback;
-				return $this->zookeeper->get($path, array($this, 'watchCallback'));
 			}
 		}
+
+		return $ret;
 	}
-	
+
 	/**
 	 * Wath event callback warper
 	 * @param int $event_type
@@ -186,15 +191,15 @@ class Zookeeper_Example
 	 * @param string $path
 	 * @return the return of the callback or null
 	 */
-	public function watchCallback($event_type, $stat, $path)
-	{
+	public function watchCallback($event_type, $stat, $path) {
 		if (!isset($this->callback[$path])) {
 			return null;
 		}
-		
+
+		$ret = $this->zookeeper->get($path, array($this, 'watchCallback'));
+
 		foreach ($this->callback[$path] as $callback) {
-			$this->zookeeper->get($path, array($this, 'watchCallback'));
-			return call_user_func($callback);
+			call_user_func($callback, $ret);
 		}
 	}
 	
@@ -239,11 +244,15 @@ var_dump($zk->set('/foo/002', 'bar2'));
 var_dump($zk->getChildren('/foo'));
 
 //watch example
-function callback() {
-    echo "in watch callback\n";
+function callback($data) {
+    echo "in watch callback {$data}\n";
+}
+function callback2($data) {
+    echo "in watch callback2 {$data}\n";
 }
 $zk->set('/bar', 1);
 $ret = $zk->watch('/bar', 'callback'); 
+$ret2 = $zk->watch('/bar', 'callback2'); 
 $zk->set('/bar', 2);
 while (true) {
     sleep(1);
